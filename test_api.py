@@ -49,13 +49,13 @@ print "refresh token:", resp["refresh_token"]
 access_token = resp["access_token"]
 refresh_token = resp["refresh_token"]
 
-sys.exit(1)
 
 url = URL + "/images"
 f = open("/tmp/test.jpg", "rb")
 data = f.read()
 headers = {}
 headers["Authorization"] = "Bearer " + access_token
+headers["Content-Type"] = "image/jpeg"
 r = requests.post(url, data=data, headers = headers)
 assert(r.status_code == 200)
 image_url = json.loads(r.text)["src_url"]
