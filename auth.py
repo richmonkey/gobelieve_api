@@ -83,6 +83,7 @@ def access_token():
     t = token.Token(**tok)
     t.user_id = int(zone+number)
     t.save(rds)
+    tok['user_id'] = t.user_id
     return make_response(200, tok)
 
 

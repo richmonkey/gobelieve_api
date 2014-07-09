@@ -26,9 +26,10 @@
 - 成功响应:
 
 		{
-			"access_token":"访问token",
-			"refresh_token":"刷新token",
-			"expires_in":"过期时间 单位秒",
+            "access_token":"访问token",
+            "refresh_token":"刷新token",
+            "expires_in":"过期时间 单位秒",
+            "user_id":"用户id"
 		}
 
 - 操作失败:
