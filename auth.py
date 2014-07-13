@@ -118,7 +118,6 @@ def require_auth(f):
 
 
 @app.route("/auth/refresh_token", methods=["POST"])
-@require_auth
 def refresh_token():
     if not request.data:
         return INVALID_PARAM()
