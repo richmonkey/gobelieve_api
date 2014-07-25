@@ -78,17 +78,21 @@ def access_token():
     c1 = obj["code"]
     number = obj["number"]
     zone = obj["zone"]
+    apns_device_token = obj["apns_device_token"] if obj.has_key("apns_device_token") else None
     c2, timestamp, _ = code.get_verify_code(rds, zone, number)
     if c1 != c2:
         return INVALID_CODE()
 
     uid = make_uid(zone, number)
-    u = user.get_user(rds, uid)
-    if u is None:
-        u = user.User()
-        u.uid = uid
+    u0 = user.get_user(rds, uid)
+    u = user.User()
+    u.uid = uid
+    u.apns_device_token = apns_device_token
+    if u0 is None:
         u.state = "Hey!"
-        user.save_user(rds, u)
+    else:
+        u.state = u0.state
+    user.save_user(rds, u)
 
     tok = create_token(3600, True)
     t = token.Token(**tok)

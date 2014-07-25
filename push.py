@@ -1,11 +1,41 @@
 import time
+import logging
+import sys
+import redis
 from apns import APNs, Frame, Payload
+from model import user
+import json
+import config
 
-apns = APNs(use_sandbox=True, cert_file='./p12/cert.pem', key_file='./p12/key.pem')
+rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 
-token_hex = "3de24300ad38763e57b529b4c0ada31d23080681bdc3739605e69347106bc00d"
-payload = Payload(alert="Hello World!", sound="default", badge=1)
-apns.gateway_server.send_notification(token_hex, payload)
+apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE, key_file=config.KEY_FILE)
 
-#for (token_hex, fail_time) in apns.feedback_server.items():
-#    print token_hex, fail_time
+def main():
+    while True:
+        item = rds.blpop("push_queue")
+        if not item:
+            continue
+        _, msg = item
+        obj = json.loads(msg)
+        u = user.get_user(rds, obj['receiver'])
+        if u is None or u.apns_device_token is None:
+            logging.info("uid:%d has't device token", obj['receiver'])
+            continue
+        token = u.apns_device_token
+        payload = Payload(alert=obj["content"], sound="default", badge=1)
+        apns.gateway_server.send_notification(token, payload)
+
+def init_logger(logger):
+    root = logger
+    root.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(filename)s:%(lineno)d -  %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
+if __name__ == "__main__":
+    init_logger(logging.getLogger(''))
+    main()
