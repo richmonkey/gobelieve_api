@@ -2,7 +2,7 @@ import time
 import logging
 import sys
 import redis
-from apns import APNs, Frame, Payload
+from apns import APNs, Payload
 from model import user
 import json
 import config
