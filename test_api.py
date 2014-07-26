@@ -49,6 +49,13 @@ print "refresh token:", resp["refresh_token"]
 access_token = resp["access_token"]
 refresh_token = resp["refresh_token"]
 
+url = URL + "/users/me"
+headers = {}
+headers["Authorization"] = "Bearer " + access_token
+values = {"state":"xxxx"}
+data = json.dumps(values)
+r = requests.patch(url, data = data, headers = headers)
+print r.status_code
 
 url = URL + "/images"
 f = open("/tmp/test.jpg", "rb")

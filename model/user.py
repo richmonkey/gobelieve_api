@@ -28,3 +28,10 @@ def save_user(rds, user):
         pipe.hset(key, "apns_device_token", user.apns_device_token)
     pipe.execute()
 
+
+def set_user_state(rds, uid, state):
+    key = user_key(uid)    
+    rds.hset(key, "state", state)
+
+def make_uid(zone, number):
+    return int(zone+"0"+number)

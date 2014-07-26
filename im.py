@@ -11,7 +11,8 @@ import auth
 import image
 import audio
 import config
-
+import user
+import authorization
 from fs import FS
 
 app = Flask(__name__)
@@ -22,10 +23,13 @@ FS.PORT = config.FS_PORT
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 auth.rds = rds
+user.rds = rds
+authorization.rds = rds
 
 app.register_blueprint(auth.app)
 app.register_blueprint(image.app)
 app.register_blueprint(audio.app)
+app.register_blueprint(user.app)
 
 def init_logger(logger):
     root = logger

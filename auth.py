@@ -28,13 +28,6 @@ def INVALID_CODE():
 def INVALID_REFRESH_TOKEN():
     e = {"error":"非法的refresh token"}
     return make_response(400, e)
-
-def INVALID_ACCESS_TOKEN():
-    e = {"error":"非法的access token"}
-    return make_response(400, e)
-def EXPIRE_ACCESS_TOKEN():
-    e = {"error":"过期的access token"}
-    return make_response(400, e)
     
 def create_verify_code():
     return ''.join([str(random.randint(0, 9)) for _ in range(6)])
@@ -50,8 +43,6 @@ def check_verify_rate(zone, number):
     return True#debug
 #    return False
 
-def make_uid(zone, number):
-    return int(zone+"0"+number)
 @app.route("/verify_code", methods=["GET", "POST"])
 def verify_code():
     zone = request.args.get("zone", "")
@@ -83,7 +74,7 @@ def access_token():
     if c1 != c2:
         return INVALID_CODE()
 
-    uid = make_uid(zone, number)
+    uid = user.make_uid(zone, number)
     u0 = user.get_user(rds, uid)
     u = user.User()
     u.uid = uid
@@ -102,23 +93,6 @@ def access_token():
     return make_response(200, tok)
 
 
-def require_auth(f):
-    """Protect resource with specified scopes."""
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if 'Authorization' in request.headers:
-            tok = request.headers.get('Authorization')[7:]
-        else:
-            return INVALID_ACCESS_TOKEN()
-        t = token.AccessToken()
-        if not t.load(rds, tok):
-            return INVALID_ACCESS_TOKEN()
-        if datetime.utcnow() > t.expires:
-            print t.expires, datetime.utcnow()
-            return EXPIRE_ACCESS_TOKEN()
-        request.uid = t.user_id
-        return f(*args, **kwargs)
-    return wrapper
 
 
 @app.route("/auth/refresh_token", methods=["POST"])
@@ -160,31 +134,3 @@ def create_token(expires_in, refresh_token=False):
         token['refresh_token'] = random_token_generator()
 
     return token
-
-
-
-@app.route("/users", methods=["POST"])
-@require_auth
-def get_phone_number_users():
-    if not request.data:
-        return INVALID_PARAM()
-    req = json.loads(request.data)
-    resp = []
-    for o in req:
-        uid = make_uid(o["zone"], o["number"])
-        u = user.get_user(rds, uid)
-        obj = {}
-        obj["zone"] = o["zone"]
-        obj["number"] = o["number"]
-
-        if u is None:
-            obj["uid"] = 0
-        else:
-            obj["uid"] = uid
-            if u.state:
-                obj["state"] = u.state
-            if u.avatar:
-                obj["avatar"] = u.avatar
-        resp.append(obj)
-            
-    return make_response(200, resp)
