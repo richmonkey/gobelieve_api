@@ -11,7 +11,7 @@ rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=confi
 
 apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE, key_file=config.KEY_FILE)
 
-def main():
+def receive_offline_message():
     while True:
         item = rds.blpop("push_queue")
         if not item:
@@ -25,6 +25,15 @@ def main():
         token = u.apns_device_token
         payload = Payload(alert=obj["content"], sound="default", badge=1)
         apns.gateway_server.send_notification(token, payload)
+
+def main():
+    while True:
+        try:
+            receive_offline_message()
+        except Exception, e:
+            logging.info("exception:%s", str(e))
+            time.sleep(1)
+            continue
 
 def init_logger(logger):
     root = logger
