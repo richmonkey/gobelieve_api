@@ -11,7 +11,7 @@ rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=confi
 
 
 def receive_offline_message():
-    apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE, key_file=config.KEY_FILE)
+    apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE)
 
     while True:
         item = rds.blpop("push_queue")

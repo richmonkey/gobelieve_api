@@ -7,4 +7,3 @@ FS_PORT=8083
 
 USE_SANDBOX = True
 CERT_FILE = "./p12/cert.pem"
-KEY_FILE = "./p12/key.pem"
