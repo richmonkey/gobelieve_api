@@ -33,5 +33,9 @@ def set_user_state(rds, uid, state):
     key = user_key(uid)    
     rds.hset(key, "state", state)
 
+def set_user_avatar(rds, uid, avatar):
+    key = user_key(uid)
+    rds.hset(key, "avatar", avatar)
+
 def make_uid(zone, number):
     return int(zone+"0"+number)

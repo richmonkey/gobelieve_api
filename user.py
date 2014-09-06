@@ -42,13 +42,19 @@ def get_phone_number_users():
 
 @app.route("/users/me", methods=['PATCH'])
 @require_auth
-def set_state():
+def set_user_property():
     if not request.data:
         return INVALID_PARAM()
     req = json.loads(request.data)
-    if not req.has_key('state'):
+    if req.has_key('state'):
+        state = req['state']
+        uid = request.uid
+        user.set_user_state(rds, uid, state)
+        return ""
+    elif req.has_key('avatar'):
+        avatar = req['avatar']
+        uid = request.uid
+        user.set_user_avatar(rds, uid, avatar)
+        return ""
+    else:
         return INVALID_PARAM()
-    state = req['state']
-    uid = request.uid
-    user.set_user_state(rds, uid, state)
-    return ""
