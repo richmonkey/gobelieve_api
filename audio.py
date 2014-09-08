@@ -3,6 +3,7 @@ from flask import request, Blueprint
 from util import make_response
 from fs import FS
 import md5
+import json
 
 app = Blueprint('audio', __name__)
 
@@ -26,7 +27,7 @@ def upload_file():
         src = "/audio/" + md5_value
         obj["src"] = src
         obj["src_url"] = url
-        return make_response(200, json.dumps(obj))
+        return make_response(200, obj)
 
 @app.route('/audios/<audio_path>')
 def download_file(audio_path):
