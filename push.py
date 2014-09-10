@@ -25,7 +25,16 @@ def receive_offline_message():
             continue
         token = u.apns_device_token
         payload = Payload(alert=obj["content"], sound="default", badge=1)
-        apns.gateway_server.send_notification(token, payload)
+        for i in range(2):
+            if i == 1:
+                logging.warn("resend notification")
+            try:
+                apns.gateway_server.send_notification(token, payload)
+                break
+            except Exception, e:
+                logging.warn("send notification exception:%s", str(e))
+                apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE)
+
 
 def main():
     while True:
