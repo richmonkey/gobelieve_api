@@ -74,8 +74,8 @@
 - 请求地址:**GET /<image_path>**
 
 ### 下载缩略图
-- 在原图URL后面添加"@{width}w_{heigth}h_{1|0}c"
-- 比如：http://www.baidu.com/images/test.png ---> http://www.baidu.com/images/test.png@100w_200h_1c
+- 在原图URL后面添加"@{width}w_{heigth}h_{1|0}c", 支持128x128, 256x256
+- 比如：http://www.baidu.com/images/test.png ---> http://www.baidu.com/images/test.png@128w_128h_1c
 
 ### 上传音频
 - 请求地址:**POST /audios**
