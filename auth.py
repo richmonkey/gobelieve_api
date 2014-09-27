@@ -66,7 +66,7 @@ def send_sms(phone_number, code):
     URL = "http://tui3.com/api/send/?"
     url = URL + urllib.urlencode(param)
 
-    resp = requests.get(URL)
+    resp = requests.get(url)
     if resp.status_code != 200:
         logging.warning("send sms err status code:%d", resp.status_code)
         return False
@@ -77,7 +77,7 @@ def send_sms(phone_number, code):
             logging.warning("send sms err:%s", resp.text)
             return False
     except Exception, e:
-        logging.warning("exception:%s", str(e))
+        logging.warning("resp:%s exception:%s", resp.text, str(e))
         return False
 
     logging.debug("send sms success phone:%s code:%s", phone_number, code)
