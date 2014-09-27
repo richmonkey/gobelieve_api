@@ -41,8 +41,8 @@ def init_logger(logger):
     ch.setFormatter(formatter)
     root.addHandler(ch)    
 
-if __name__ == '__main__':
-    log = logging.getLogger('')
-    init_logger(log)
+log = logging.getLogger('')
+init_logger(log)
 
+if __name__ == '__main__':
     app.run(host="0.0.0.0")

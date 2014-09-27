@@ -80,7 +80,7 @@ def send_sms(phone_number, code):
         logging.warning("resp:%s exception:%s", resp.text, str(e))
         return False
 
-    logging.debug("send sms success phone:%s code:%s", phone_number, code)
+    logging.info("send sms success phone:%s code:%s", phone_number, code)
     return True
 
 
