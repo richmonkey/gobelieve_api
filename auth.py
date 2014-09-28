@@ -53,8 +53,7 @@ def check_verify_rate(zone, number):
 
 def send_sms(phone_number, code):
     #短信模版1
-    c = " 尊敬的用户,您的注册验证码是%s,感谢您使用%s！"%(code, "羊蹄甲")
-    content = "推立方测试%s"%c
+    content = "尊敬的用户,您的注册验证码是%s,感谢您使用%s！"%(code, "羊蹄甲")
 
     param = {}
     param["k"] = "098b460ba826e1f503e50ead09dc5059"
