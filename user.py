@@ -5,6 +5,7 @@ from functools import wraps
 from flask import request, Blueprint
 from model import user
 import json
+import logging
 from util import make_response
 
 app = Blueprint('user', __name__)
@@ -12,6 +13,7 @@ rds = None
 
 def INVALID_PARAM():
     e = {"error":"非法输入"}
+    logging.warn("非法输入")
     return make_response(400, e)
 
 @app.route("/users", methods=["POST"])

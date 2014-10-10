@@ -5,14 +5,17 @@ from functools import wraps
 from model import token
 from datetime import datetime
 from util import make_response
+import logging
 
 rds = None
 
 def INVALID_ACCESS_TOKEN():
     e = {"error":"非法的access token"}
+    logging.warn("非法的access token")
     return make_response(400, e)
 def EXPIRE_ACCESS_TOKEN():
     e = {"error":"过期的access token"}
+    logging.warn("过期的access token")
     return make_response(400, e)
 
 def require_auth(f):
