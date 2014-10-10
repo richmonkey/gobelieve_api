@@ -82,6 +82,16 @@ def send_sms(phone_number, code):
     return True
 
 
+def is_test_number(number):
+    if number == "13800000000" or number == "13800000001" or \
+       number == "13800000002" or number == "13800000003" or \
+       number == "13800000004" or number == "13800000005" or \
+       number == "13800000006" or number == "13800000007" or \
+       number == "13800000008" or number == "13800000009" :
+        return True
+    else:
+        return False
+    
 @app.route("/verify_code", methods=["GET", "POST"])
 def verify_code():
     zone = request.args.get("zone", "")
@@ -98,8 +108,7 @@ def verify_code():
         data["number"] = number
         data["zone"] = zone
 
-
-    if number == "13800000000":
+    if is_test_number(number):
         return make_response(200, data = data)
         
     if not send_sms(number, vc):
@@ -118,7 +127,7 @@ def access_token():
     zone = obj["zone"]
     apns_device_token = obj["apns_device_token"] if obj.has_key("apns_device_token") else None
 
-    if zone == "86" and number == "13800000000":
+    if is_test_number(number):
         pass
     else:
         c2, timestamp, _ = code.get_verify_code(rds, zone, number)
