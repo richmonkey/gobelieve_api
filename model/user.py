@@ -17,7 +17,8 @@ def get_user(rds, uid):
        u.apns_device_token is None and u.up_timestamp is None:
         return None
     u.uid = uid
-    u.up_timestamp = int(u.up_timestamp)
+    if u.up_timestamp:
+        u.up_timestamp = int(u.up_timestamp)
     return u
 
 def save_user(rds, user):
