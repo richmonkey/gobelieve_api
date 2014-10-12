@@ -38,6 +38,8 @@ def get_phone_number_users():
                 obj["state"] = u.state
             if u.avatar:
                 obj["avatar"] = u.avatar
+            if u.up_timestamp:
+                obj["up_timestamp"] = u.up_timestamp
         resp.append(obj)
             
     return make_response(200, resp)
