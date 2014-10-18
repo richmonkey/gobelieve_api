@@ -8,7 +8,7 @@ import sys
 import os
 import redis
 import auth
-import image
+#import image
 import audio
 import config
 import user
@@ -27,7 +27,7 @@ user.rds = rds
 authorization.rds = rds
 
 app.register_blueprint(auth.app)
-app.register_blueprint(image.app)
+#app.register_blueprint(image.app)
 app.register_blueprint(audio.app)
 app.register_blueprint(user.app)
 
@@ -45,4 +45,4 @@ log = logging.getLogger('')
 init_logger(log)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=8888)
