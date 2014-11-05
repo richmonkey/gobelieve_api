@@ -8,7 +8,7 @@ import sys
 import os
 import redis
 import auth
-#import image
+import image
 import audio
 import config
 import user
@@ -27,7 +27,7 @@ user.rds = rds
 authorization.rds = rds
 
 app.register_blueprint(auth.app)
-#app.register_blueprint(image.app)
+app.register_blueprint(image.app)
 app.register_blueprint(audio.app)
 app.register_blueprint(user.app)
 
