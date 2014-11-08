@@ -25,8 +25,9 @@ def receive_offline_message():
             logging.info("uid:%d has't device token", obj['receiver'])
             continue
         token = u.apns_device_token
-
         content = obj["content"]
+        logging.info("sender:%d receiver:%d token:%s content:%s", 
+                     obj["sender"], obj["receiver"], token, content)
         payload = Payload(alert=content, sound="default", badge=1)
 
         for i in range(2):
