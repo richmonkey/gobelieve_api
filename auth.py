@@ -56,9 +56,9 @@ def check_verify_rate(zone, number):
     return False
 
 
-def send_sms(phone_number, code):
+def send_sms(phone_number, code, app_name):
     #短信模版1
-    content = "尊敬的用户,您的注册验证码是%s,感谢您使用%s！"%(code, "羊蹄甲")
+    content = "尊敬的用户,您的注册验证码是%s,感谢您使用%s！"%(code, app_name)
 
     param = {}
     param["k"] = "098b460ba826e1f503e50ead09dc5059"
@@ -116,8 +116,13 @@ def verify_code():
     if is_test_number(number):
         return make_response(200, data = data)
         
-    if not send_sms(number, vc):
-        return SMS_FAIL()
+    pos = request.base_url.find("http://voip")
+    if pos == 0:
+        if not send_sms(number, vc, "电话虫"):
+            return SMS_FAIL()
+    else:
+        if not send_sms(number, vc, "羊蹄甲"):
+            return SMS_FAIL()
 
     return make_response(200, data = data)
 
