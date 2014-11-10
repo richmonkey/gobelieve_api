@@ -37,7 +37,7 @@ def upload_image():
     url = request.url_root + "images/" + name + ext
     src = "/images/" + name + ext
     obj = {"src":src, "src_url":url}
-    return json.dumps(obj)
+    return make_response(200, data=obj)
 
 def download_thumbnail(path):
     tb_path = thumbnail_path(path)
@@ -65,4 +65,13 @@ def download_image(image_path):
     if not data:
         return flask.make_response("", 400)
     else:
-        return data
+        res = flask.make_response(data, 200)
+        if image_path.endswith(".jpg"):
+            res.headers['Content-Type'] = "image/jpeg"
+        elif image_path.endswith(".png"):
+            res.headers['Content-Type'] = "image/png"
+        else:
+            print "invalid image type"
+        return res
+
+
