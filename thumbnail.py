@@ -75,7 +75,14 @@ def cut_image(image, width, height):
     return thumbnail
 
 def deflate_image(image, width, height):
-    image.thumbnail((width, height), Image.ANTIALIAS)
+    w, h = image.size
+
+    old_ratio = h*1.0/w
+
+    new_width = width
+    new_height = int(width*old_ratio)
+
+    image.thumbnail((new_width, new_height), Image.ANTIALIAS)
     return image
 
 def create_thumbnail(data, params):
