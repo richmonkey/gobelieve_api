@@ -22,6 +22,7 @@
             "zone":"国家区号",
             "number":"手机号"
             "apns_device_token":"IOS device token",
+            "ng_device_token":"Android device token",
         }
         
 - 成功响应:

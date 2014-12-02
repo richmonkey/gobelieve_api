@@ -136,7 +136,7 @@ def access_token():
     number = obj["number"]
     zone = obj["zone"]
     apns_device_token = obj["apns_device_token"] if obj.has_key("apns_device_token") else None
-
+    ng_device_token = obj["ng_device_token"] if obj.has_key("ng_device_token") else None
     if is_test_number(number):
         pass
     else:
@@ -149,6 +149,7 @@ def access_token():
     u = user.User()
     u.uid = uid
     u.apns_device_token = apns_device_token
+    u.ng_device_token = ng_device_token
     if u0 is None:
         u.state = "Hey!"
     else:
