@@ -16,8 +16,9 @@ def get_user(rds, uid):
     u.state, u.avatar, u.apns_device_token, u.ng_device_token, u.up_timestamp = rds.hmget(key, "state", "avatar", "apns_device_token", 
                                                                                           "ng_device_token", "up_timestamp")
     if u.state is None and u.avatar is None and \
-       u.apns_device_token is None and u.ng_device_token \
-       and u.up_timestamp is None:
+       u.apns_device_token is None and \
+       u.ng_device_token is None and \
+       u.up_timestamp is None:
         return None
     u.uid = uid
     if u.up_timestamp:
