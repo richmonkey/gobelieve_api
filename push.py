@@ -9,6 +9,7 @@ import json
 import config
 import traceback
 import npush
+import binascii
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE)
@@ -32,6 +33,7 @@ def ios_push(u, body):
         if i == 1:
             logging.warn("resend notification")
         try:
+            logging.debug("ios push:%s", payload.alert)
             apns.gateway_server.send_notification(token, payload)
             break
         except Exception, e:
@@ -39,9 +41,14 @@ def ios_push(u, body):
             apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE)
     
 def ng_push(u, body):
+    global npush_conn
     token = u.ng_device_token
+    token = binascii.a2b_hex(token)
     content = json.loads(body)
 
+    obj = {}
+    obj["title"] = u"羊蹄甲"
+    obj["push_type"] = 3
     if content.has_key("text"):
         obj["content"] = content["text"]
     elif content.has_key("audio"):
@@ -60,6 +67,7 @@ def ng_push(u, body):
             notification.identifier = 1
             notification.expiry = int(time.time()+3600)
             notification.payload = json.dumps(obj)
+            logging.debug("ng notification:%s", notification.payload)
             s = notification.to_data()
             s = npush.ENHANCED_NOTIFICATION_COMMAND + s
             npush_conn.write(s)
