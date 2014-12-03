@@ -34,6 +34,16 @@ class EnhancedNotification:
         return p + self.payload
 
 
+def set_socket_keepalive(sock):
+    sock.setsockopt(msocket.SOL_SOCKET, msocket.SO_KEEPALIVE, 1)
+    if sys.platform.find("linux") == 0:
+        after_idle_sec=10*60
+        interval_sec=10*60
+        max_fails=3
+        sock.setsockopt(msocket.IPPROTO_TCP, msocket.TCP_KEEPIDLE, after_idle_sec)
+        sock.setsockopt(msocket.IPPROTO_TCP, msocket.TCP_KEEPINTVL, interval_sec)
+        sock.setsockopt(msocket.IPPROTO_TCP, msocket.TCP_KEEPCNT, max_fails)
+
 class Connection(object):
     """
     A generic connection class for communicating with the APNs
@@ -60,6 +70,7 @@ class Connection(object):
                 self._socket = socket(AF_INET, SOCK_STREAM)
                 self._socket.settimeout(self.timeout)
                 self._socket.connect((self.server, self.port))
+                set_socket_keepalive(self._socket)
                 break
             except timeout:
                 pass
