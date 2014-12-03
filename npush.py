@@ -1,6 +1,8 @@
 import struct
 from socket import socket, timeout, AF_INET, SOCK_STREAM
 from socket import error as socket_error
+import socket as msocket
+import sys
 import ssl
 try:
     from ssl import wrap_socket, SSLError
