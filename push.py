@@ -115,7 +115,7 @@ def init_logger(logger):
 
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(filename)s:%(lineno)d -  %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s %(filename)s:%(lineno)d -  %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
