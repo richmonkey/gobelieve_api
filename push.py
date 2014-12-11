@@ -60,6 +60,9 @@ def ng_push(u, body):
     else:
         obj["content"] = u"收到一条消息"
 
+    obj["package_name"] = "com.beetle.bauhinia"
+    obj["app_params"] = {}
+
     for i in range(2):
         if i == 1:
             logging.warn("resend notification")
