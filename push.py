@@ -48,7 +48,7 @@ def ng_push(u, body):
 
     obj = {}
     obj["title"] = u"羊蹄甲"
-    obj["push_type"] = 3
+    obj["push_type"] = 1
     obj["is_ring"] = True
     obj["is_vibrate"] = True
     if content.has_key("text"):
