@@ -11,9 +11,13 @@ import traceback
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 
-def receive_offline_message():
-    apns = APNs(use_sandbox=config.FACE_USE_SANDBOX, cert_file=config.FACE_CERT_FILE)
+def apns_listener(err):
+    logging.warn("apns err:%s", err)
 
+def receive_offline_message():
+    identifier = 0
+    apns = APNs(use_sandbox=config.FACE_USE_SANDBOX, cert_file=config.FACE_CERT_FILE, enhanced=True)
+    apns.gateway_server.register_response_listener(apns_listener)
     while True:
         item = rds.blpop("face_push_queue")
         if not item:
@@ -21,25 +25,23 @@ def receive_offline_message():
         _, msg = item
         obj = json.loads(msg)
         u = user.get_user(rds, obj['receiver'])
-        if u is None or u.apns_device_token is None:
+        if u is None or u.face_apns_device_token is None:
             logging.info("uid:%d has't device token", obj['receiver'])
             continue
-        token = u.apns_device_token
+        token = u.face_apns_device_token
         content = obj["content"]
         logging.info("sender:%d receiver:%d token:%s content:%s", 
                      obj["sender"], obj["receiver"], token, content)
         payload = Payload(alert=content, sound="default", badge=1)
-
+        identifier += 1
         for i in range(2):
             if i == 1:
                 logging.warn("resend notification")
             try:
-                apns.gateway_server.send_notification(token, payload)
+                apns.gateway_server.send_notification(token, payload, identifier=identifier)
                 break
             except Exception, e:
                 print_exception_traceback()
-                apns = APNs(use_sandbox=config.FACE_USE_SANDBOX, cert_file=config.FACE_CERT_FILE)
-
 
 def main():
     while True:
