@@ -11,13 +11,9 @@ import traceback
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 
-def apns_listener(err):
-    logging.warn("apns err:%s", err)
-
 def receive_offline_message():
     identifier = 0
-    apns = APNs(use_sandbox=config.FACE_USE_SANDBOX, cert_file=config.FACE_CERT_FILE, enhanced=True)
-    apns.gateway_server.register_response_listener(apns_listener)
+    apns = APNs(use_sandbox=config.FACE_USE_SANDBOX, cert_file=config.FACE_CERT_FILE)
     while True:
         item = rds.blpop("face_push_queue")
         if not item:
@@ -42,6 +38,7 @@ def receive_offline_message():
                 break
             except Exception, e:
                 print_exception_traceback()
+                apns = APNs(use_sandbox=config.FACE_USE_SANDBOX, cert_file=config.FACE_CERT_FILE)
 
 def main():
     while True:
