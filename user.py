@@ -16,13 +16,37 @@ def INVALID_PARAM():
     logging.warn("非法输入")
     return make_response(400, e)
 
-@app.route("/users", methods=["POST"])
+
+@app.route("/users", methods=["POST", "GET"])
 @require_auth
+def user_contact():
+    if request.method == "POST":
+        return get_phone_number_users()
+    else:
+        return get_user_contact()
+
+def get_user_contact():
+    uid = request.uid
+    contacts = user.get_user_contact_list(rds, uid)
+    resp = []
+    for contact in contacts:
+        u = user.get_user(rds, contact.uid)
+        if u is None:
+            continue
+        obj = {}
+        if u.avatar:
+            obj["avatar"] = u.avatar
+        obj["uid"] = int(contact.uid)
+        obj["name"] = contact.name
+        resp.append(obj)
+    return json.dumps(resp)
+
 def get_phone_number_users():
     if not request.data:
         return INVALID_PARAM()
     req = json.loads(request.data)
     resp = []
+    contacts = []
     for o in req:
         uid = user.make_uid(o["zone"], o["number"])
         u = user.get_user(rds, uid)
@@ -33,6 +57,10 @@ def get_phone_number_users():
         if u is None:
             obj["uid"] = 0
         else:
+            contact = user.Contact()
+            contact.name = o["name"] if o.has_key("name") else ""
+            contact.uid = uid
+            contacts.append(contact)
             obj["uid"] = uid
             if u.state:
                 obj["state"] = u.state
@@ -42,6 +70,7 @@ def get_phone_number_users():
                 obj["up_timestamp"] = u.up_timestamp
         resp.append(obj)
             
+    user.set_user_contact_list(rds, uid, contacts)
     return make_response(200, resp)
 
 @app.route("/users/me", methods=['PATCH'])

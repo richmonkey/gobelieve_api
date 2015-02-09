@@ -57,6 +57,18 @@ data = json.dumps(values)
 r = requests.patch(url, data = data, headers = headers)
 print r.status_code
 
+
+url = URL + "/users"
+headers = {}
+headers["Authorization"] = "Bearer " + access_token
+
+obj = [{"zone":"86", "number":"13800000000", "name":"test"}]
+r = requests.post(url, data = json.dumps(obj), headers = headers)
+print r.status_code
+
+r = requests.get(url, headers = headers)
+print r.text
+
 url = URL + "/images"
 f = open("/tmp/test.jpg", "rb")
 data = f.read()

@@ -1,5 +1,6 @@
+var accessToken;
+var refreshToken;
 var username;
-var receiver;
 var users;
 var base = 1000;
 var msgLocalID=0;

@@ -1,3 +1,13 @@
+import logging
+class Contact:
+    def __init__(self):
+        self.name = None
+        self.uid = None
+    def to_string(self):
+        return "%d_%s"%(self.uid, self.name)
+    def from_string(self, s):
+        self.uid, self.name = s.split("_", 1)
+        
 class User:
     def __init__(self):
         self.uid = None
@@ -56,6 +66,46 @@ def save_user(rds, user):
         
     pipe.execute()
 
+def set_user_contact_list(rds, uid, contacts):
+    if not contacts:
+        return
+
+    id_key = "user_contact_ids_%s"%uid
+    name_key = "user_contact_names_%s"%uid
+    ids = []
+    names = []
+    for c in contacts:
+        ids.append(c.uid)
+        names.append(c.name)
+    pipe = rds.pipeline()
+    pipe.delete(id_key)
+    pipe.rpush(id_key, *tuple(ids))
+    pipe.delete(name_key)
+    pipe.rpush(name_key, *tuple(names))
+    pipe.execute()
+
+def get_user_contact_list(rds, uid):
+    id_key = "user_contact_ids_%s"%uid
+    name_key = "user_contact_names_%s"%uid
+
+    contacts = []
+    pipe = rds.pipeline()
+    pipe.lrange(name_key, 0, -1)
+    pipe.lrange(id_key, 0, -1)
+    names, ids = pipe.execute()
+
+    if len(names) != len(ids):
+        logging.error("name count is't equal id count")
+        return contacts
+
+    for i, uid in enumerate(ids):
+        contact = Contact()
+        contact.uid = uid
+        contact.name = names[i]
+        contacts.append(contact)
+
+    return contacts
+        
 
 def set_user_state(rds, uid, state):
     key = user_key(uid)    
