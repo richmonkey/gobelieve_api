@@ -20,6 +20,7 @@ authorization.rds = rds
 
 urls = (
   '/', 'index',
+  '/index.html', 'index',
   '/qrcode/login', 'QRLogin',
   '/qrcode/sweep', 'QRSweep',
   '/qrcode/(.*)', 'QRCode'
@@ -163,7 +164,7 @@ class QRLogin:
             t = token.Token(**tok)
             t.user_id = session.uid
             t.save(rds)
-            tok['uid'] = session.uid
+            tok['uid'] = int(session.uid)
             return json.dumps(tok)
          
         e = wait_sweep(sid)
@@ -180,7 +181,7 @@ class QRLogin:
             t = token.Token(**tok)
             t.user_id = session.uid
             t.save(rds)
-            tok['uid'] = session.uid
+            tok['uid'] = int(session.uid)
             return json.dumps(tok)
 
         logging.warning("session login fail")

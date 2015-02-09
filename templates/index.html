@@ -9,9 +9,45 @@ $def with (sid)
 	<script>
 	  var sid="$sid"
 	</script>
+
+       <link rel="stylesheet" href="static/style.css" type="text/css" />
+        <script src="static/lib/jquery-1.11.1.js" type="text/javascript"></script>
+	<script src="static/lib/engine.io.js"></script>
+	<script src="static/lib/json2.js"></script>
+	<script src="static/lib/im.js"></script>
+	<script src="static/client.js"></script>
+
+
   </head>
+
   <body>
+    <div id="app">
+      <div id="loginView">
 	<img src="/qrcode/$sid"/>
 	<p><em>Hello</em>, world!</p>
+      </div>
+      <div id="chatHistory">
+      </div>
+      <div id="toolbar">
+        <ul id="status">
+          <li>
+            users:
+            <select name="users" id="usersList">
+
+            </select>
+          </li>
+          <li>
+            name:
+            <span id="name">
+            </span>
+          </li>
+        </ul>
+        <input tabindex="1" type="text" id="entry" />
+      </div>
+    </div>
+  </body>
+
+
+  <body>
   </body>
 </html>
