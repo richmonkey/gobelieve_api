@@ -6,6 +6,7 @@ from model import token
 from datetime import datetime
 from util import make_response
 import logging
+import random
 
 rds = None
 
@@ -35,3 +36,27 @@ def require_auth(f):
         request.uid = t.user_id
         return f(*args, **kwargs)
     return wrapper
+
+
+      
+UNICODE_ASCII_CHARACTER_SET = ('abcdefghijklmnopqrstuvwxyz'
+                               'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                               '0123456789')
+
+def random_token_generator(length=30, chars=UNICODE_ASCII_CHARACTER_SET):
+    rand = random.SystemRandom()
+    return ''.join(rand.choice(chars) for x in range(length))
+
+def create_token(expires_in, refresh_token=False):
+    """Create a BearerToken, by default without refresh token."""
+
+    token = {
+        'access_token': random_token_generator(),
+        'expires_in': expires_in,
+        'token_type': 'Bearer',
+    }
+    if refresh_token:
+        token['refresh_token'] = random_token_generator()
+
+    return token
+

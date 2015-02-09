@@ -12,6 +12,7 @@ from util import make_response
 from model import code
 from model import token
 from model import user
+from authorization import create_token
 
 app = Blueprint('auth', __name__)
 rds = None
@@ -188,23 +189,3 @@ def refresh_token():
     
     return make_response(200, tok)
 
-UNICODE_ASCII_CHARACTER_SET = ('abcdefghijklmnopqrstuvwxyz'
-                               'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                               '0123456789')
-
-def random_token_generator(length=30, chars=UNICODE_ASCII_CHARACTER_SET):
-    rand = random.SystemRandom()
-    return ''.join(rand.choice(chars) for x in range(length))
-
-def create_token(expires_in, refresh_token=False):
-    """Create a BearerToken, by default without refresh token."""
-
-    token = {
-        'access_token': random_token_generator(),
-        'expires_in': expires_in,
-        'token_type': 'Bearer',
-    }
-    if refresh_token:
-        token['refresh_token'] = random_token_generator()
-
-    return token
