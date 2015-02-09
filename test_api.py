@@ -12,7 +12,7 @@ import sys
 URL = "http://192.168.33.10:5000"
 
 url = URL + "/verify_code?"
-NUMBER = "13635273142"
+NUMBER = "13800000000"
 values = {'zone' : '86', 'number' : NUMBER}
 params = urllib.urlencode(values) 
 url += params
