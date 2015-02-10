@@ -70,7 +70,7 @@ def get_phone_number_users():
                 obj["up_timestamp"] = u.up_timestamp
         resp.append(obj)
             
-    user.set_user_contact_list(rds, uid, contacts)
+    user.set_user_contact_list(rds, request.uid, contacts)
     return make_response(200, resp)
 
 @app.route("/users/me", methods=['PATCH'])

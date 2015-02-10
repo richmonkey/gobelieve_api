@@ -62,7 +62,7 @@ url = URL + "/users"
 headers = {}
 headers["Authorization"] = "Bearer " + access_token
 
-obj = [{"zone":"86", "number":"13800000000", "name":"test"}]
+obj = [{"zone":"86", "number":"13800000009", "name":"test9"}]
 r = requests.post(url, data = json.dumps(obj), headers = headers)
 print r.status_code
 
