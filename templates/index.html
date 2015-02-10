@@ -1,22 +1,20 @@
 $def with (sid)
 
-
 <html>
   <head>
+        <link rel="stylesheet" href="static/style.css" type="text/css" />
+
 	<script type="text/javascript" src="static/jquery.js"></script>
 	<script type="text/javascript" src="static/jquery.timer.js"></script>
+	<script type="text/javascript" src="static/lib/engine.io.js"></script>
+	<script type="text/javascript" src="static/lib/json2.js"></script>
+	<script type="text/javascript" src="static/lib/im.js"></script>
+        <script type="text/javascript" src="static/util.js"></script>
+	<script type="text/javascript" src="static/client.js"></script>
 	<script type="text/javascript" src="static/index.js"></script>
 	<script>
 	  var sid="$sid"
 	</script>
-
-       <link rel="stylesheet" href="static/style.css" type="text/css" />
-        <script src="static/lib/jquery-1.11.1.js" type="text/javascript"></script>
-	<script src="static/lib/engine.io.js"></script>
-	<script src="static/lib/json2.js"></script>
-	<script src="static/lib/im.js"></script>
-	<script src="static/client.js"></script>
-
 
   </head>
 
@@ -24,7 +22,6 @@ $def with (sid)
     <div id="app">
       <div id="loginView">
 	<img src="/qrcode/$sid"/>
-	<p><em>Hello</em>, world!</p>
       </div>
       <div id="chatHistory">
       </div>

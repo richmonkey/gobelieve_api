@@ -163,10 +163,15 @@ def access_token():
     user.save_user(rds, u)
 
     tok = create_token(3600, True)
-    t = token.Token(**tok)
-    t.user_id = uid
-    t.save(rds)
     tok['uid'] = uid
+
+    t = token.AccessToken(**tok)
+    t.save(rds)
+    print tok
+    t = token.RefreshToken(**tok)
+    t.save(rds)
+    print tok
+
     return make_response(200, tok)
 
 
@@ -182,10 +187,9 @@ def refresh_token():
         return INVALID_REFRESH_TOKEN()
 
     tok = create_token(3600, True)
-    t = token.Token(**tok)
+    t = token.AccessToken(**tok)
     t.user_id = rt.user_id
     t.save(rds)
-    
     
     return make_response(200, tok)
 

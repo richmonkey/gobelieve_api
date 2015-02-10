@@ -3,10 +3,10 @@
 from flask import request
 from functools import wraps
 from model import token
-from datetime import datetime
 from util import make_response
 import logging
 import random
+import time
 
 rds = None
 
@@ -30,8 +30,8 @@ def require_auth(f):
         t = token.AccessToken()
         if not t.load(rds, tok):
             return INVALID_ACCESS_TOKEN()
-        if datetime.utcnow() > t.expires:
-            print t.expires, datetime.utcnow()
+        if time.time() > t.expires:
+            print t.expires, time.time()
             return EXPIRE_ACCESS_TOKEN()
         request.uid = t.user_id
         return f(*args, **kwargs)
