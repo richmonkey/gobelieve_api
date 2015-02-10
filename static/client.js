@@ -31,7 +31,7 @@ var observer = {
     },
 };
 
-im = new IMService("127.0.0.1", 13890, 0, observer, false);
+im = new IMService("im.yufeng.me", 13890, 0, observer, false);
 
 
 function onLoginSuccess(result) {
