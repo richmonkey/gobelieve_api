@@ -7,6 +7,7 @@ from util import make_response
 import logging
 import random
 import time
+import web
 
 rds = None
 
@@ -36,8 +37,37 @@ def require_auth(f):
         request.uid = t.user_id
         return f(*args, **kwargs)
     return wrapper
+  
+def web_requires_auth(f):
+    @wraps(f)     
+    def decorated(*args, **kwargs):        
+        auth = web.ctx.env['HTTP_AUTHORIZATION'] if 'HTTP_AUTHORIZATION' in  web.ctx.env else None
+        unauth = True
+        if len(auth) > 7 and auth[:7] == "Bearer ":
+            tok = auth[7:]
+            t = token.AccessToken()
+            if t.load(rds, tok) and time.time() < t.expires:
+                unauth = False
 
+        if unauth :
+            web.ctx.status = '401 Unauthorized'
+            return Unauthorized()
 
+        web.ctx.uid = t.user_id
+        return f(*args, **kwargs)
+    
+    return decorated
+    
+class Unauthorized():
+    def GET(self):
+        e = {"error":"401 Unauthorized"}
+        web.ctx.headers["Content-Type"] = "application/json"
+        return json.dumps(e)
+
+    def POST(self):
+        e = {"error":"401 Unauthorized"}
+        web.ctx.headers["Content-Type"] = "application/json"
+        return json.dumps(e)
       
 UNICODE_ASCII_CHARACTER_SET = ('abcdefghijklmnopqrstuvwxyz'
                                'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

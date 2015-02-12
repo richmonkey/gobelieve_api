@@ -11,9 +11,10 @@ import json
 import sys
 
 URL = "http://192.168.33.10"
+#URL = "http://im.yufeng.me"
 
 url = URL + "/verify_code?"
-NUMBER = "13800000000"
+NUMBER = "13800000009"
 values = {'zone' : '86', 'number' : NUMBER}
 params = urllib.urlencode(values) 
 url += params
@@ -63,13 +64,13 @@ url = URL + "/users"
 headers = {}
 headers["Authorization"] = "Bearer " + access_token
  
-obj = [{"zone":"86", "number":"13800000009", "name":"test9"}]
+obj = [{"zone":"86", "number":"13800000000", "name":"test0"}]
 r = requests.post(url, data = json.dumps(obj), headers = headers)
 print r.status_code
  
 r = requests.get(url, headers = headers)
 print "users:", r.text
- 
+
 url = URL + "/images"
 f = open("/tmp/test.jpg", "rb")
 data = f.read()
@@ -110,9 +111,11 @@ sid = obj["sid"]
 print "new sid:", sid
 
 def sweep_qrcode():
+    headers = {}
+    headers["Authorization"] = "Bearer " + access_token
     url = URL + "/qrcode/sweep"
-    obj = {"sid":sid, "token":access_token}
-    r = requests.post(url, data=json.dumps(obj))
+    obj = {"sid":sid}
+    r = requests.post(url, headers=headers, data=json.dumps(obj))
     print "sweep:", r.status_code
     return
 

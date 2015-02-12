@@ -14,6 +14,7 @@ import config
 import logging
 import sys
 from error import Error
+from authorization import web_requires_auth
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 authorization.rds = rds
@@ -83,21 +84,16 @@ def post_sweep_notification(rds, sid):
     pipe.execute()
 
 
+@web_requires_auth
 class QRSweep:
     def POST(self):
         data = web.data()
         obj = json.loads(data)
         sid = obj["sid"]
-        t = obj["token"]
-
-        tok = token.AccessToken()
-        tok.load(rds, t)
-        if not tok.user_id:
-            raise Error(400, "token is't exist")
-
+        uid = web.ctx.uid
         session = Session()
         session.sid = sid
-        session.uid = tok.user_id
+        session.uid = uid
         session.save(rds)
         post_sweep_notification(rds, sid)
         return
