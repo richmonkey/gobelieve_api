@@ -28,7 +28,7 @@ var observer = {
         } else if (state == IMService.STATE_UNCONNECTED) {
             console.log("im unconnected");
         }
-    },
+    }
 };
 
 im = new IMService("im.yufeng.me", 13890, 0, observer, false);

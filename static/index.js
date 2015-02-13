@@ -11,7 +11,7 @@ var htmlLoyout = {
     buildMsg: function (msg) {
         var html = [];
         html.push('<li class="chat-item">');
-        html.push('    <div class="message message-out">');
+        html.push('    <div class="message ' + msg.cls + '">');
         html.push('        <div class="bubble">' + msg.text + '</div>');
         html.push('    </div>');
         html.push('</li>');
@@ -38,7 +38,8 @@ function addMessage(from, target, text, time) {
     text = util.toStaticHTML(text);
     var msg = {
         time: time,
-        text: text
+        text: text,
+        cls:'message-out'
 
     };
     $("#chatHistory ul").append(htmlLoyout.buildMsg(msg));
@@ -59,7 +60,6 @@ function addMessage(from, target, text, time) {
     base += increase;
     window.scrollTo(0, base);
     $("#entry").text('').focus();
-    return false;
 
 }
 
@@ -148,12 +148,16 @@ $(document).ready(function () {
     usersList.on('click', 'li', function () {
         var _this = $(this),
             uid = _this.attr('data-uid'),
-            msgTo = $('#msg_to'),
             main = $('#main');
-        _this.addClass('active').siblings().removeClass('active');
         $('#intro').hide();
-        main.find('.chat-wrap').removeClass('hide');
         $('#to_user').text(uid);
+        main.find('.chat-wrap').removeClass('hide');
+        _this.addClass('active').siblings().removeClass('active');
+
+        ///读取聊天记录添加到列表
+
+        $('#chatHistory ul').html(htmlLoyout.buildMsg({time: 1234567891, text: '你好！'+uid, cls: 'message-out'}));
+        $('#chatHistory ul').append(htmlLoyout.buildMsg({time: 1234567891, text: 'Hello！', cls: 'message-in'}));
 
 
     });
@@ -174,6 +178,7 @@ $(document).ready(function () {
                 }
             }
         }
+        return false;
     });
 
     applogin();
