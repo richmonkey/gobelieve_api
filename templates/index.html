@@ -1,50 +1,89 @@
 $def with (sid)
-
 <html>
-  <head>
-        <link rel="stylesheet" href="static/style.css" type="text/css" />
+<head>
+    <link rel="stylesheet" href="static/css/style.css" type="text/css"/>
+    <script>
+        var sid = "$sid"
+    </script>
+</head>
+<body>
+<div id="loginView">
+    <img src="/qrcode/$sid"/>
+</div>
+<div class="app-wrap full-wrap">
+    <div class="app">
+        <div class="pane pane-list">
+            <div class="profile pane-header pane-list-header">
+                <img src="static/images/_avatar.png" class="avatar" alt=""/>
+                <span class="name" id="name"></span>
+            </div>
+            <div class="contact-list">
+                <ul id="usersList">
+                </ul>
+            </div>
+        </div>
+        <div class="main pane pane-chat" id="main">
+            <div class="intro" id="intro">
+                请先择联系人
+            </div>
+            <div class="pane-header pane-chat-header">
+                <img src="static/images/_avatar.png" class="avatar" alt=""/>
 
-	<script type="text/javascript" src="static/jquery.js"></script>
-	<script type="text/javascript" src="static/jquery.timer.js"></script>
-	<script type="text/javascript" src="static/lib/engine.io.js"></script>
-	<script type="text/javascript" src="static/lib/json2.js"></script>
-	<script type="text/javascript" src="static/lib/im.js"></script>
-        <script type="text/javascript" src="static/util.js"></script>
-	<script type="text/javascript" src="static/client.js"></script>
-	<script type="text/javascript" src="static/index.js"></script>
-	<script>
-	  var sid="$sid"
-	</script>
+                <div class="name" id="to_user"></div>
+            </div>
+            <div class="chat-list" id="chatHistory">
+                <ul>
+                    <li class="chat-item">
+                        <div class="message message-in">
+                            <div class="bubble">TEST</div>
+                        </div>
+                    </li>
+                    <li class="chat-item">
+                        <div class="message message-out">
+                            <div class="bubble">Tss</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="chat-form pane-chat-footer">
+                <textarea id="entry" class="chat-input"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
 
-  </head>
-
-  <body>
-    <div id="app">
-      <div id="loginView">
-	<img src="/qrcode/$sid"/>
-      </div>
-      <div id="chatHistory">
-      </div>
-      <div id="toolbar">
+<!--
+<div id="app">
+    <div id="loginView">
+        <img src="/qrcode/$sid"/>
+    </div>
+    <div id="chatHistory">
+    </div>
+    <div id="toolbar">
         <ul id="status">
-          <li>
-            users:
-            <select name="users" id="usersList">
+            <li>
+                users:
+                <select name="users" id="usersList">
 
-            </select>
-          </li>
-          <li>
-            name:
+                </select>
+            </li>
+            <li>
+                name:
             <span id="name">
             </span>
-          </li>
+            </li>
         </ul>
-        <input tabindex="1" type="text" id="entry" />
-      </div>
+        <input tabindex="1" type="text" id="entry"/>
     </div>
-  </body>
-
-
-  <body>
-  </body>
+</div>
+-->
+<script type="text/javascript" src="static/jquery.js"></script>
+<script type="text/javascript" src="static/jquery.timer.js"></script>
+<script type="text/javascript" src="static/lib/engine.io.js"></script>
+<script type="text/javascript" src="static/lib/json2.js"></script>
+<script type="text/javascript" src="static/lib/im.js"></script>
+<script type="text/javascript" src="static/util.js"></script>
+<script type="text/javascript" src="static/client.js"></script>
+<script type="text/javascript" src="static/index.js"></script>
+</body>
 </html>

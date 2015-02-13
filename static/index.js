@@ -1,8 +1,27 @@
-
 //always view the most recent message when it is added
+var htmlLoyout = {
+    buildUser: function (user) {
+        var html = [];
+        html.push('<li data-uid="' + user + '">');
+        html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
+        html.push('    <span class="name">' + user + '</span>');
+        html.push('</li>');
+        return html.join('');
+    },
+    buildMsg: function (msg) {
+        var html = [];
+        html.push('<li class="chat-item">');
+        html.push('    <div class="message message-out">');
+        html.push('        <div class="bubble">' + msg.text + '</div>');
+        html.push('    </div>');
+        html.push('</li>');
+        return html.join('');
+
+    }
+};
 function scrollDown(base) {
     window.scrollTo(0, base);
-    $("#entry").focus();
+    $("#entry").text('').focus();
 }
 
 // add message on board
@@ -16,20 +35,32 @@ function addMessage(from, target, text, time) {
         // if it's a timestamp, interpret it
         time = new Date(time);
     }
+    text = util.toStaticHTML(text);
+    var msg = {
+        time: time,
+        text: text
+
+    };
+    $("#chatHistory ul").append(htmlLoyout.buildMsg(msg));
+
     //every message you see is actually a table with 3 cols:
     //  the time,
     //  the person who caused the event,
     //  and the content
-    var messageElement = $(document.createElement("table"));
-    messageElement.addClass("message");
+//    var messageElement = $(document.createElement("table"));
+//    messageElement.addClass("message");
     // sanitize
-    text = util.toStaticHTML(text);
-    var content = '<tr>' + '  <td class="date">' + util.timeString(time) + '</td>' + '  <td class="nick">' + util.toStaticHTML(from) + ' says to ' + name + ': ' + '</td>' + '  <td class="msg-text">' + text + '</td>' + '</tr>';
-    messageElement.html(content);
-    //the log is the stream that we view
-    $("#chatHistory").append(messageElement);
+//    text = util.toStaticHTML(text);
+//    var content = '<tr>' + '  <td class="date">' + util.timeString(time) + '</td>' + '  <td class="nick">' + util.toStaticHTML(from) + ' says to ' + name + ': ' + '</td>' + '  <td class="msg-text">' + text + '</td>' + '</tr>';
+//    messageElement.html(content);
+//    the log is the stream that we view
+//    $("#chatHistory").append(messageElement);
+
     base += increase;
-    scrollDown(base);
+    window.scrollTo(0, base);
+    $("#entry").text('').focus();
+    return false;
+
 }
 
 // show tip
@@ -54,21 +85,22 @@ function tip(type, name) {
 
 // init user list
 function initUserList(data) {
-    users = data.users;
+    var users = data.users, html = [];
     for (var i = 0; i < users.length; i++) {
-        var slElement = $(document.createElement("option"));
-        slElement.attr("value", users[i]);
-        slElement.text(users[i]);
-        $("#usersList").append(slElement);
+        html.push('<li data-uid="' + users[i] + '">');
+        html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
+        html.push('    <span class="name">' + users[i] + '</span>');
+        html.push('</li>');
     }
+    $("#usersList").html(html.join(''));
 }
 
 // add user in user list
 function addUser(user) {
-    var slElement = $(document.createElement("option"));
-    slElement.attr("value", user);
-    slElement.text(user);
-    $("#usersList").append(slElement);
+//    var slElement = $(document.createElement("option"));
+//    slElement.attr("value", user);
+//    slElement.text(user);
+    $("#usersList").append(htmlLoyout.buildUser(user));
 }
 
 // remove user from user list
@@ -104,7 +136,7 @@ function showChat() {
 $(document).ready(function () {
     //when first time into chat room.
     console.log("show login");
-    var sid = util.getCookie("sid")
+    var sid = util.getCookie("sid");
     if (sid) {
         console.log("sid:", sid);
         showChat();
@@ -112,16 +144,29 @@ $(document).ready(function () {
         showLogin();
     }
 
+    var usersList = $('#usersList');
+    usersList.on('click', 'li', function () {
+        var _this = $(this),
+            uid = _this.attr('data-uid'),
+            msgTo = $('#msg_to'),
+            main = $('#main');
+        _this.addClass('active').siblings().removeClass('active');
+        $('#intro').hide();
+        main.find('.chat-wrap').removeClass('hide');
+        $('#to_user').text(uid);
+
+
+    });
+
     //deal with chat mode.
     $("#entry").keypress(function (e) {
-        var target = parseInt($("#usersList").val());
+        var target = parseInt($("#to_user").text());
         if (e.keyCode != 13 /* Return */) return;
         var msg = $("#entry").val().replace("\n", "");
         if (!util.isBlank(msg)) {
-            var message = {sender:username, receiver: target, content: msg, msgLocalID:msgLocalID++};
+            var message = {sender: username, receiver: target, content: msg, msgLocalID: msgLocalID++};
             if (im.connectState == IMService.STATE_CONNECTED) {
                 im.sendPeerMessage(message);
-             
                 $("#entry").val(""); // clear the entry field.
                 if (target != '*' && target != username) {
                     addMessage(username, target, msg);
