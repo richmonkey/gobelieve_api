@@ -1,16 +1,24 @@
 var accessToken;
-var refreshToken;
-var username;
+var loginUser = {};
 var users;
-var base = 1000;
+
+//当前会话的uid
+var peer = 0;
 var msgLocalID=1;
+
+var base = 1000;
 var increase = 25;
+
 var im;
+var imDB = new IMDB();
+
 var observer = {
     handlePeerMessage: function (msg) {
         console.log("msg sender:", msg.sender, " receiver:", msg.receiver, " content:", msg.content, " timestamp:", msg.timestamp);
-        addMessage(msg.sender, msg.receiver, msg.content);
-        $("#chatHistory").show();
+        if (msg.sender == peer) {
+            addMessage(msg);
+        }
+        imDB.saveMessage(msg.sender, msg);
     },
     handleMessageACK: function(msgLocalID, receiver) {
         console.log("message ack local id:", msgLocalID, " receiver:", receiver)
@@ -38,14 +46,13 @@ function onLoginSuccess(result) {
     console.log("login success user id:", result.uid, 
                 " access token:", result.access_token,  
                 " status code:", status);
-    username = result.uid
+    loginUser.uid = result.uid
     accessToken = result.access_token
-    refreshToken = result.refresh_token
 
     im.uid = result.uid
     im.start();
 
-    setName();
+    setName(loginUser.uid);
     showChat();
 
     getContactList()
@@ -57,9 +64,10 @@ function getContactList() {
 	dataType: 'json',
         headers:{"Authorization":"Bearer " + accessToken},
 	success: function(result, status, xhr) {
+            users = result
             for (var i in result) {
                 contact = result[i]
-                addUser(contact.uid)
+                addUser(contact);
                 console.log("contact:", contact, contact.avatar, contact.name, contact.uid);
             }
 	},

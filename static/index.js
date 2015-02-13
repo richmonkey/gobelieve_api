@@ -1,10 +1,13 @@
+var base = 1000;
+var increase = 25;
+
 //always view the most recent message when it is added
 var htmlLoyout = {
     buildUser: function (user) {
         var html = [];
-        html.push('<li data-uid="' + user + '">');
+        html.push('<li data-uid="' + user.uid + '">');
         html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
-        html.push('    <span class="name">' + user + '</span>');
+        html.push('    <span class="name">' + user.name + '</span>');
         html.push('</li>');
         return html.join('');
     },
@@ -19,48 +22,34 @@ var htmlLoyout = {
 
     }
 };
+
 function scrollDown(base) {
     window.scrollTo(0, base);
     $("#entry").text('').focus();
 }
 
 // add message on board
-function addMessage(from, target, text, time) {
-    var name = (target == '*' ? 'all' : target);
-    if (text === null) return;
-    if (time == null) {
-        // if the time is null or undefined, use the current time.
-        time = new Date();
-    } else if ((time instanceof Date) === false) {
-        // if it's a timestamp, interpret it
-        time = new Date(time);
-    }
-    text = util.toStaticHTML(text);
-    var msg = {
+function addMessage(msg) {
+    time = new Date();
+    text = util.toStaticHTML(msg.content);
+
+    var m = {
         time: time,
         text: text,
-        cls:'message-out'
-
     };
-    $("#chatHistory ul").append(htmlLoyout.buildMsg(msg));
+    
+    console.log("uid:", im.uid, " sender:", msg.sender);
+    if (im.uid == msg.sender) {
+        m.cls = "message-out";
+    } else {
+        m.cls = "message-in";
+    }
 
-    //every message you see is actually a table with 3 cols:
-    //  the time,
-    //  the person who caused the event,
-    //  and the content
-//    var messageElement = $(document.createElement("table"));
-//    messageElement.addClass("message");
-    // sanitize
-//    text = util.toStaticHTML(text);
-//    var content = '<tr>' + '  <td class="date">' + util.timeString(time) + '</td>' + '  <td class="nick">' + util.toStaticHTML(from) + ' says to ' + name + ': ' + '</td>' + '  <td class="msg-text">' + text + '</td>' + '</tr>';
-//    messageElement.html(content);
-//    the log is the stream that we view
-//    $("#chatHistory").append(messageElement);
+    $("#chatHistory ul").append(htmlLoyout.buildMsg(m));
 
     base += increase;
     window.scrollTo(0, base);
     $("#entry").text('').focus();
-
 }
 
 // show tip
@@ -95,41 +84,28 @@ function initUserList(data) {
     $("#usersList").html(html.join(''));
 }
 
-// add user in user list
+
 function addUser(user) {
-//    var slElement = $(document.createElement("option"));
-//    slElement.attr("value", user);
-//    slElement.text(user);
     $("#usersList").append(htmlLoyout.buildUser(user));
 }
 
-// remove user from user list
-function removeUser(user) {
-    $("#usersList option").each(
-        function () {
-            if ($(this).val() === user) $(this).remove();
-        });
-}
 
-// set your name
-function setName() {
+
+function setName(username) {
     $("#name").text(username);
 }
 
-// show login panel
+
 function showLogin() {
     $("#loginView").show();
-    $("#chatHistory").hide();
-    $("#toolbar").hide();
-    $("#loginUser").focus();
+    $("#chat").hide();
 }
 
-// show chat panel
+
 function showChat() {
     $("#loginView").hide();
-    $("#toolbar").show();
-    $("#chatHistory").show();
-    $("entry").focus();
+    $("#chat").show();
+    //$("entry").focus();
     scrollDown(base);
 }
 
@@ -149,17 +125,33 @@ $(document).ready(function () {
         var _this = $(this),
             uid = _this.attr('data-uid'),
             main = $('#main');
+
+        if (peer == uid) {
+            return;
+        }
+
         $('#intro').hide();
         $('#to_user').text(uid);
         main.find('.chat-wrap').removeClass('hide');
         _this.addClass('active').siblings().removeClass('active');
 
         ///读取聊天记录添加到列表
-
-        $('#chatHistory ul').html(htmlLoyout.buildMsg({time: 1234567891, text: '你好！'+uid, cls: 'message-out'}));
-        $('#chatHistory ul').append(htmlLoyout.buildMsg({time: 1234567891, text: 'Hello！', cls: 'message-in'}));
-
-
+        messages = imDB.loadUserMessage(uid)
+        console.log("load user:", uid);
+        $('#chatHistory ul').html("");
+        for (i in messages) {
+            msg = messages[i];
+            console.log("message:", msg);
+            m = {time:msg.timestamp, text:msg.content}
+            if (im.uid == msg.sender) {
+                m.cls = "message-out";
+            } else {
+                m.cls = "message-in";
+            }
+            $('#chatHistory ul').append(htmlLoyout.buildMsg(m));
+        }
+        //设置当前会话uid
+        peer = uid;
     });
 
     //deal with chat mode.
@@ -168,14 +160,16 @@ $(document).ready(function () {
         if (e.keyCode != 13 /* Return */) return;
         var msg = $("#entry").val().replace("\n", "");
         if (!util.isBlank(msg)) {
-            var message = {sender: username, receiver: target, content: msg, msgLocalID: msgLocalID++};
+            var now = new Date();
+            var message = {sender: loginUser.uid, receiver: target, content: msg, msgLocalID: msgLocalID++, timestamp:now.getTime()};
             if (im.connectState == IMService.STATE_CONNECTED) {
+                imDB.saveMessage(target, message);
                 im.sendPeerMessage(message);
                 $("#entry").val(""); // clear the entry field.
-                if (target != '*' && target != username) {
-                    addMessage(username, target, msg);
+                //if (target != '*' && target != loginUser.uid) {
+                    addMessage(message);
                     $("#chatHistory").show();
-                }
+            //}
             }
         }
         return false;
