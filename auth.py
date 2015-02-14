@@ -98,7 +98,7 @@ def is_test_number(number):
     else:
         return False
     
-if is_super_number(number):
+def is_super_number(number):
     if number == "13635273142":
         return True
     else:
