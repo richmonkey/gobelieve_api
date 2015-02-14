@@ -15,6 +15,7 @@ var observer = {
         if (msg.sender == peer) {
             addMessage(msg);
         }
+        msg.contentObj = JSON.parse(msg.content)
         imDB.saveMessage(msg.sender, msg);
     },
     handleMessageACK: function(msgLocalID, receiver) {
@@ -91,7 +92,7 @@ function applogin() {
 	 error : function(xhr, err) {
 	     console.log("login err:", err, xhr.status)
              if (xhr.status == 400) {
-                 console.log("180s timeout")
+                 console.log("timeout")
              } else {
              }
 	 }

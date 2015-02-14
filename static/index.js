@@ -38,10 +38,17 @@ function scrollDown(base) {
     $("#entry").text('').focus();
 }
 
-// add message on board
-function addMessage(msg) {
+function appendMessage(msg) {
     time = new Date();
-    text = util.toStaticHTML(msg.content);
+    if (msg.contentObj.text) {
+        text = util.toStaticHTML(msg.contentObj.text);
+    } else {
+        console.log("unknow message type")
+        return
+    }
+    if (msg.timestamp) {
+        time.setTime(msg.timestamp*1000)
+    }
 
     var m = {
         time: time,
@@ -57,6 +64,11 @@ function addMessage(msg) {
 
     $("#chatHistory ul").append(htmlLoyout.buildMsg(m));
 
+}
+
+// add message on board
+function addMessage(msg) {
+    appendMessage(msg);
     base += increase;
     window.scrollTo(0, base);
     $("#entry").text('').focus();
@@ -152,13 +164,7 @@ $(document).ready(function () {
         for (i in messages) {
             msg = messages[i];
             console.log("message:", msg);
-            m = {time:msg.timestamp, text:msg.content}
-            if (im.uid == msg.sender) {
-                m.cls = "message-out";
-            } else {
-                m.cls = "message-in";
-            }
-            $('#chatHistory ul').append(htmlLoyout.buildMsg(m));
+            appendMessage(msg)
         }
         //设置当前会话uid
         peer = uid;
@@ -171,15 +177,18 @@ $(document).ready(function () {
         var msg = $("#entry").val().replace("\n", "");
         if (!util.isBlank(msg)) {
             var now = new Date();
-            var message = {sender: loginUser.uid, receiver: target, content: msg, msgLocalID: msgLocalID++, timestamp:now.getTime()};
+
+            obj = {"text":msg}
+            var textMsg = JSON.stringify(obj);
+
+            var message = {sender: loginUser.uid, receiver: target, content: textMsg, msgLocalID: msgLocalID++, timestamp:(now.getTime()/1000)};
+            message.contentObj = obj
             if (im.connectState == IMService.STATE_CONNECTED) {
                 imDB.saveMessage(target, message);
                 im.sendPeerMessage(message);
                 $("#entry").val(""); // clear the entry field.
-                //if (target != '*' && target != loginUser.uid) {
-                    addMessage(message);
-                    $("#chatHistory").show();
-            //}
+                addMessage(message);
+                $("#chatHistory").show();
             }
         }
         return false;
