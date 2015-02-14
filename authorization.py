@@ -61,12 +61,12 @@ def web_requires_auth(f):
 class Unauthorized():
     def GET(self):
         e = {"error":"401 Unauthorized"}
-        web.ctx.headers["Content-Type"] = "application/json"
+        web.header("Content-Type", "application/json")
         return json.dumps(e)
 
     def POST(self):
         e = {"error":"401 Unauthorized"}
-        web.ctx.headers["Content-Type"] = "application/json"
+        web.header("Content-Type", "application/json")
         return json.dumps(e)
       
 UNICODE_ASCII_CHARACTER_SET = ('abcdefghijklmnopqrstuvwxyz'
