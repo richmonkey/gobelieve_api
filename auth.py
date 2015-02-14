@@ -194,7 +194,8 @@ def refresh_token():
     if not rt.load(rds, tok):
         return INVALID_REFRESH_TOKEN()
 
-    tok = create_token(3600, True)
+    tok = create_token(3600, False)
+    tok["refresh_token"] = tok
     t = token.AccessToken(**tok)
     t.user_id = rt.user_id
     t.save(rds)
