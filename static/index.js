@@ -161,7 +161,7 @@ $(document).ready(function () {
         messages = imDB.loadUserMessage(uid)
         console.log("load user:", uid);
         $('#chatHistory ul').html("");
-        for (i in messages) {
+        for (var i in messages) {
             msg = messages[i];
             console.log("message:", msg);
             appendMessage(msg)

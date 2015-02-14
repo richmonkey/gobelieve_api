@@ -1,6 +1,6 @@
 var accessToken;
 var loginUser = {};
-var users;
+var users = new Array();
 
 //当前会话的uid
 var peer = 0;
@@ -23,6 +23,18 @@ var observer = {
             addMessage(msg);
         }
         imDB.saveMessage(msg.sender, msg);
+        var exists = false;
+        for (var i in users) {
+            var user = users[i]
+            if (user.uid == msg.sender) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            user = {uid:msg.sender}
+            addUser(user);
+            users.push(user)
+        }
     },
     handleMessageACK: function(msgLocalID, receiver) {
         console.log("message ack local id:", msgLocalID, " receiver:", receiver)
