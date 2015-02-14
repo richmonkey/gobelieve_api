@@ -195,7 +195,7 @@ def refresh_token():
         return INVALID_REFRESH_TOKEN()
 
     tok = create_token(3600, False)
-    tok["refresh_token"] = tok
+    tok["refresh_token"] = obj["refresh_token"]
     t = token.AccessToken(**tok)
     t.user_id = rt.user_id
     t.save(rds)
