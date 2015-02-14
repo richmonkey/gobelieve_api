@@ -12,10 +12,16 @@ var imDB = new IMDB();
 var observer = {
     handlePeerMessage: function (msg) {
         console.log("msg sender:", msg.sender, " receiver:", msg.receiver, " content:", msg.content, " timestamp:", msg.timestamp);
+
+        try{
+            msg.contentObj = JSON.parse(msg.content)
+        }catch(e){
+            console.log("json parse exception:", e)
+            return
+        }
         if (msg.sender == peer) {
             addMessage(msg);
         }
-        msg.contentObj = JSON.parse(msg.content)
         imDB.saveMessage(msg.sender, msg);
     },
     handleMessageACK: function(msgLocalID, receiver) {
