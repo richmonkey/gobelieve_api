@@ -1,13 +1,23 @@
 var base = 1000;
 var increase = 25;
 
+function getUserName(user) {
+    if (user.name) {
+        return user.name
+    } else {
+        uid = user.uid.toString()
+        i = uid.indexOf("0")
+        return uid.substr(i+1)
+    }
+}
+
 //always view the most recent message when it is added
 var htmlLoyout = {
     buildUser: function (user) {
         var html = [];
         html.push('<li data-uid="' + user.uid + '">');
         html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
-        html.push('    <span class="name">' + user.name + '</span>');
+        html.push('    <span class="name">' + getUserName(user) + '</span>');
         html.push('</li>');
         return html.join('');
     },

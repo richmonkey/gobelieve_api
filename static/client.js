@@ -6,9 +6,6 @@ var users;
 var peer = 0;
 var msgLocalID=1;
 
-var base = 1000;
-var increase = 25;
-
 var im;
 var imDB = new IMDB();
 
