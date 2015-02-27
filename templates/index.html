@@ -7,10 +7,14 @@ $def with (sid)
     </script>
 </head>
 <body>
-<div id="loginView">
-    <img src="/qrcode/$sid"/>
+<div id="loginView" class="app-wrap full-wrap hide">
+    <h1>美蹄甲</h1>
+    <div class="img">
+        <img src="/qrcode/$sid"/>
+        <p class="desc">请使用美蹄甲扫描二维码以登录</p>
+    </div>
 </div>
-<div id="chat" class="app-wrap full-wrap">
+<div id="chat" class="app-wrap full-wrap hide">
     <div class="app">
         <div class="pane pane-list">
             <div class="profile pane-header pane-list-header">

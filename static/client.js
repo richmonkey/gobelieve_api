@@ -11,6 +11,7 @@ var imDB = new IMDB();
 
 var observer = {
     handlePeerMessage: function (msg) {
+
         console.log("msg sender:", msg.sender, " receiver:", msg.receiver, " content:", msg.content, " timestamp:", msg.timestamp);
 
         try{

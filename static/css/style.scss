@@ -43,6 +43,7 @@ ul, ol, li {
 }
 
 .app {
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.06),0 2px 5px 0 rgba(0,0,0,.2);
     height: calc(100% - 38px);
     position: relative;
     margin: 0 auto;
@@ -244,6 +245,7 @@ ul, ol, li {
     -moz-user-select: text;
     -webkit-user-select: all;
     -webkit-transform: translateZ(0);
+    border-right:1px solid #efefef;
     ul {
         -webkit-box-flex: 0;
         -webkit-flex: 0 0 auto;
@@ -364,6 +366,35 @@ ul, ol, li {
 
 }
 
+#loginView{
+    h1{
+        padding:0;
+        margin:0;
+        position: relative;
+        z-index: 10001;
+        color:#fff;
+        text-align: center;
+        font-size: 28px;
+        line-height: 80px;
+    }
+    .img{
+        position: absolute;
+        width:310px;
+        left:50%;
+        z-index: 10000;
+        top:100px;
+        margin-left: -155px;
+        .desc{
+            text-align: center;
+            line-height: 48px;
+        }
+    }
+}
+#usersList .uid{
+    padding-left:20px;
+    font-size: 14px;
+    color: #888;
+}
 @media screen and (min-width: 1320px) {
 
     .app, .app.three {

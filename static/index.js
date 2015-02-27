@@ -3,25 +3,25 @@ var increase = 25;
 
 function getUserName(user) {
     if (user.name) {
-        return user.name
+        return user.name;
     } else {
-        uid = user.uid.toString()
-        i = uid.indexOf("0")
-        return uid.substr(i+1)
+        var uid = user.uid.toString(),
+            i = uid.indexOf("0");
+        return uid.substr(i + 1)
     }
 }
 
-//always view the most recent message when it is added
 var htmlLoyout = {
     buildUser: function (user) {
         var html = [];
         html.push('<li data-uid="' + user.uid + '">');
         html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
         html.push('    <span class="name">' + getUserName(user) + '</span>');
+        html.push('    <span class="uid">' + user.uid + '</span>');
         html.push('</li>');
         return html.join('');
     },
-    buildMsg: function (msg) {
+    buildText: function (msg) {
         var html = [];
         html.push('<li class="chat-item">');
         html.push('    <div class="message ' + msg.cls + '">');
@@ -29,49 +29,64 @@ var htmlLoyout = {
         html.push('    </div>');
         html.push('</li>');
         return html.join('');
+    },
+    buildAudio: function (msg) {
+        var html = [];
+        html.push('<li class="chat-item">');
+        html.push('  <div class="message ' + msg.cls + '">');
+        html.push('     <div class="bubble">');
+        html.push('       <audio  controls="controls" src="' + msg.audio.url + '"></audio>');
+        html.push('     </div>');
+        html.push('  </div>');
+        html.push('</li>');
+        return html.join('');
+    }
+};
+var node = {
+    chatHistory: $("#chatHistory ul")
+};
+var process = {
+    playAudio: function () {
 
+    },
+    appendAudio: function (m) {
+        node.chatHistory.append(htmlLoyout.buildAudio(m));
+    },
+    appendText: function (m) {
+        node.chatHistory.append(htmlLoyout.buildText(m));
     }
 };
 
-function scrollDown(base) {
-    window.scrollTo(0, base);
+function scrollDown() {
+    $('#chatHistory').scrollTop($('#chatHistory ul').outerHeight());
     $("#entry").text('').focus();
 }
 
 function appendMessage(msg) {
-    time = new Date();
-    if (msg.contentObj.text) {
-        text = util.toStaticHTML(msg.contentObj.text);
-    } else {
-        console.log("unknow message type")
-        return
-    }
+    var time = new Date(),
+        m = {};
     if (msg.timestamp) {
-        time.setTime(msg.timestamp*1000)
+        m.time = time.setTime(msg.timestamp * 1000)
     }
-
-    var m = {
-        time: time,
-        text: text,
-    };
-    
-    console.log("uid:", im.uid, " sender:", msg.sender);
     if (im.uid == msg.sender) {
         m.cls = "message-out";
     } else {
         m.cls = "message-in";
     }
-
-    $("#chatHistory ul").append(htmlLoyout.buildMsg(m));
-
+    if (msg.contentObj.text) {
+        m.text = util.toStaticHTML(msg.contentObj.text);
+        process.appendText(m);
+    } else if (msg.contentObj.audio) {
+        m.audio = msg.contentObj.audio;
+        process.appendAudio(m);
+    }
+    console.log("uid:", im.uid, " sender:", msg.sender);
 }
 
 // add message on board
 function addMessage(msg) {
     appendMessage(msg);
-    base += increase;
-    window.scrollTo(0, base);
-    $("#entry").text('').focus();
+    scrollDown();
 }
 
 // show tip
@@ -95,22 +110,22 @@ function tip(type, name) {
 }
 
 // init user list
-function initUserList(data) {
-    var users = data.users, html = [];
-    for (var i = 0; i < users.length; i++) {
-        html.push('<li data-uid="' + users[i] + '">');
-        html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
-        html.push('    <span class="name">' + users[i] + '</span>');
-        html.push('</li>');
-    }
-    $("#usersList").html(html.join(''));
-}
+//function initUserList(data) {
+//    var users = data.users, html = [];
+//    console.log(users)
+//    for (var i = 0; i < users.length; i++) {
+//        html.push('<li data-uid="' + users[i] + '">');
+//        html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
+//        html.push('    <span class="name">' + users[i] + '</span>');
+//        html.push('</li>');
+//    }
+//    $("#usersList").html(html.join(''));
+//}
 
 
 function addUser(user) {
-    $("#usersList").append(htmlLoyout.buildUser(user));
+    $("#usersList").prepend(htmlLoyout.buildUser(user));
 }
-
 
 
 function setName(username) {
@@ -119,16 +134,16 @@ function setName(username) {
 
 
 function showLogin() {
-    $("#loginView").show();
-    $("#chat").hide();
+    $("#loginView").removeClass('hide').show();
+    $("#chat").addClass('hide').hide();
 }
 
 
 function showChat() {
-    $("#loginView").hide();
-    $("#chat").show();
+    $("#loginView").addClass('hide').hide();
+    $("#chat").removeClass('hide').show();
     //$("entry").focus();
-    scrollDown(base);
+    scrollDown();
 }
 
 $(document).ready(function () {
@@ -158,7 +173,7 @@ $(document).ready(function () {
         _this.addClass('active').siblings().removeClass('active');
 
         ///读取聊天记录添加到列表
-        messages = imDB.loadUserMessage(uid)
+        messages = imDB.loadUserMessage(uid);
         console.log("load user:", uid);
         $('#chatHistory ul').html("");
         for (var i in messages) {
@@ -178,10 +193,16 @@ $(document).ready(function () {
         if (!util.isBlank(msg)) {
             var now = new Date();
 
-            obj = {"text":msg}
+            obj = {"text": msg}
             var textMsg = JSON.stringify(obj);
 
-            var message = {sender: loginUser.uid, receiver: target, content: textMsg, msgLocalID: msgLocalID++, timestamp:(now.getTime()/1000)};
+            var message = {
+                sender: loginUser.uid,
+                receiver: target,
+                content: textMsg,
+                msgLocalID: msgLocalID++,
+                timestamp: (now.getTime() / 1000)
+            };
             message.contentObj = obj
             if (im.connectState == IMService.STATE_CONNECTED) {
                 imDB.saveMessage(target, message);
