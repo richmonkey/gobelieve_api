@@ -23,6 +23,7 @@ var observer = {
         if (msg.sender == peer) {
             addMessage(msg);
         }
+        process.msgTip(msg.sender);
         imDB.saveMessage(msg.sender, msg);
         var exists = false;
         for (var i in users) {

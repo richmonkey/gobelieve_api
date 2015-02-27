@@ -18,6 +18,7 @@ var htmlLoyout = {
         html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
         html.push('    <span class="name">' + getUserName(user) + '</span>');
         html.push('    <span class="uid">' + user.uid + '</span>');
+        html.push('    <span class="num">' + (user.num || '') + '</span>');
         html.push('</li>');
         return html.join('');
     },
@@ -43,7 +44,8 @@ var htmlLoyout = {
     }
 };
 var node = {
-    chatHistory: $("#chatHistory ul")
+    chatHistory: $("#chatHistory ul"),
+    usersList: $('#usersList')
 };
 var process = {
     playAudio: function () {
@@ -54,6 +56,19 @@ var process = {
     },
     appendText: function (m) {
         node.chatHistory.append(htmlLoyout.buildText(m));
+    },
+    msgTip: function (uid) {
+        console.log(uid,'tip======');
+        var userDom= node.usersList.find('li[data-uid="'+uid+'"]'),
+            num = userDom.find('.num').text();
+        if(!userDom.hasClass('active')){
+            if(num){
+                num++;
+            }else{
+                num = 1;
+            }
+            userDom.find('.num').text(num);
+        }
     }
 };
 
@@ -109,22 +124,8 @@ function tip(type, name) {
     var pop = new Pop(title, tip);
 }
 
-// init user list
-//function initUserList(data) {
-//    var users = data.users, html = [];
-//    console.log(users)
-//    for (var i = 0; i < users.length; i++) {
-//        html.push('<li data-uid="' + users[i] + '">');
-//        html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
-//        html.push('    <span class="name">' + users[i] + '</span>');
-//        html.push('</li>');
-//    }
-//    $("#usersList").html(html.join(''));
-//}
-
-
 function addUser(user) {
-    $("#usersList").prepend(htmlLoyout.buildUser(user));
+    node.usersList.prepend(htmlLoyout.buildUser(user));
 }
 
 
@@ -157,8 +158,7 @@ $(document).ready(function () {
         showLogin();
     }
 
-    var usersList = $('#usersList');
-    usersList.on('click', 'li', function () {
+    node.usersList.on('click', 'li', function () {
         var _this = $(this),
             uid = _this.attr('data-uid'),
             main = $('#main');
@@ -171,13 +171,14 @@ $(document).ready(function () {
         $('#to_user').text(uid);
         main.find('.chat-wrap').removeClass('hide');
         _this.addClass('active').siblings().removeClass('active');
+        _this.find('.num').text('');
 
         ///读取聊天记录添加到列表
         messages = imDB.loadUserMessage(uid);
         console.log("load user:", uid);
-        $('#chatHistory ul').html("");
+        node.chatHistory.html("");
         for (var i in messages) {
-            msg = messages[i];
+            var msg = messages[i];
             console.log("message:", msg);
             appendMessage(msg)
         }

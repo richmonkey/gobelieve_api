@@ -330,6 +330,16 @@ ul, ol, li {
     text-align: center;
     line-height: 48px; }
 
+#usersList ul li {
+  position: relative; }
+#usersList .num {
+  color: #f60;
+  position: absolute;
+  right: 10px;
+  top: 30px;
+  font-size: 20px;
+  margin-left: 8px;
+  font-weight: 700; }
 #usersList .uid {
   padding-left: 20px;
   font-size: 14px;
