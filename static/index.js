@@ -10,7 +10,16 @@ function getUserName(user) {
         return uid.substr(i + 1)
     }
 }
-
+var helper = {
+    toTime: function (ts) {
+        //时间戳取时间
+        var d= ts ? new Date(ts) :new Date();
+        var H = d.getHours();
+        var m = d.getMinutes();
+//            var s = date.getSeconds();
+        return H + ':' + (m < 10 ? '0' + m : m);
+    }
+};
 var htmlLoyout = {
     buildUser: function (user) {
         var html = [];
@@ -23,10 +32,26 @@ var htmlLoyout = {
         return html.join('');
     },
     buildText: function (msg) {
+
+        console.log('===============', msg);
         var html = [];
         html.push('<li class="chat-item">');
         html.push('    <div class="message ' + msg.cls + '">');
-        html.push('        <div class="bubble">' + msg.text + '</div>');
+        html.push('        <div class="bubble"><p class="pre">' + msg.text + '</p>');
+        html.push('           <span class="time">' + helper.toTime(msg.timestamp * 1000) + '</span>');
+        html.push('        </div>');
+        html.push('    </div>');
+        html.push('</li>');
+        return html.join('');
+    },
+    buildImage: function (msg) {
+        var html = [];
+        html.push('<li class="chat-item">');
+        html.push('    <div class="message ' + msg.cls + '">');
+        html.push('        <div class="bubble"><p class="pre"><a href="' + msg.image + '" target="_blank">' +
+            '<img class="image-thumb-body" src="' + msg.image + '" /></p></a>');
+        html.push('           <span class="time">' + helper.toTime(msg.timestamp * 1000) + '</span>');
+        html.push('        </div>');
         html.push('    </div>');
         html.push('</li>');
         return html.join('');
@@ -36,7 +61,8 @@ var htmlLoyout = {
         html.push('<li class="chat-item">');
         html.push('  <div class="message ' + msg.cls + '">');
         html.push('     <div class="bubble">');
-        html.push('       <audio  controls="controls" src="' + msg.audio.url + '"></audio>');
+        html.push('       <p class="pre"><audio  controls="controls" src="' + msg.audio.url + '"></audio></p>');
+        html.push('       <span class="time">' + helper.toTime(msg.timestamp * 1000) + '</span>');
         html.push('     </div>');
         html.push('  </div>');
         html.push('</li>');
@@ -45,7 +71,8 @@ var htmlLoyout = {
 };
 var node = {
     chatHistory: $("#chatHistory ul"),
-    usersList: $('#usersList')
+    usersList: $('#usersList'),
+    exit: $('#exit')
 };
 var process = {
     playAudio: function () {
@@ -57,18 +84,23 @@ var process = {
     appendText: function (m) {
         node.chatHistory.append(htmlLoyout.buildText(m));
     },
+    appendImage: function (m) {
+        node.chatHistory.append(htmlLoyout.buildImage(m));
+    },
     msgTip: function (uid) {
-        console.log(uid,'tip======');
-        var userDom= node.usersList.find('li[data-uid="'+uid+'"]'),
+        console.log(uid, 'tip======');
+        var userDom = node.usersList.find('li[data-uid="' + uid + '"]'),
             num = userDom.find('.num').text();
-        if(!userDom.hasClass('active')){
-            if(num){
+        if (!userDom.hasClass('active')) {
+            if (num) {
                 num++;
-            }else{
+            } else {
                 num = 1;
             }
             userDom.find('.num').text(num);
         }
+        node.usersList.prepend(userDom);
+        node.usersList.remove(userDom);
     }
 };
 
@@ -81,7 +113,8 @@ function appendMessage(msg) {
     var time = new Date(),
         m = {};
     if (msg.timestamp) {
-        m.time = time.setTime(msg.timestamp * 1000)
+        time.setTime(msg.timestamp * 1000);
+        m.timestamp = msg.timestamp;
     }
     if (im.uid == msg.sender) {
         m.cls = "message-out";
@@ -94,6 +127,9 @@ function appendMessage(msg) {
     } else if (msg.contentObj.audio) {
         m.audio = msg.contentObj.audio;
         process.appendAudio(m);
+    } else if (msg.contentObj.image) {
+        m.image = msg.contentObj.image;
+        process.appendImage(m);
     }
     console.log("uid:", im.uid, " sender:", msg.sender);
 }
@@ -157,7 +193,11 @@ $(document).ready(function () {
     } else {
         showLogin();
     }
-
+    node.exit.on('click', function () {
+        document.cookie = 'sid=';
+        document.cookie = 'token=';
+        location.reload();
+    });
     node.usersList.on('click', 'li', function () {
         var _this = $(this),
             uid = _this.attr('data-uid'),
@@ -166,16 +206,13 @@ $(document).ready(function () {
         if (peer == uid) {
             return;
         }
-
         $('#intro').hide();
         $('#to_user').text(uid);
         main.find('.chat-wrap').removeClass('hide');
         _this.addClass('active').siblings().removeClass('active');
         _this.find('.num').text('');
-
         ///读取聊天记录添加到列表
-        messages = imDB.loadUserMessage(uid);
-        console.log("load user:", uid);
+        var messages = imDB.loadUserMessage(uid);
         node.chatHistory.html("");
         for (var i in messages) {
             var msg = messages[i];

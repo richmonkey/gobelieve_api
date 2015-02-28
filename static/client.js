@@ -17,13 +17,12 @@ var observer = {
         try{
             msg.contentObj = JSON.parse(msg.content)
         }catch(e){
-            console.log("json parse exception:", e)
+            console.log("json parse exception:", e);
             return
         }
         if (msg.sender == peer) {
             addMessage(msg);
         }
-        process.msgTip(msg.sender);
         imDB.saveMessage(msg.sender, msg);
         var exists = false;
         for (var i in users) {
@@ -37,6 +36,7 @@ var observer = {
             addUser(user);
             users.push(user)
         }
+        process.msgTip(msg.sender);
     },
     handleMessageACK: function(msgLocalID, receiver) {
         console.log("message ack local id:", msgLocalID, " receiver:", receiver)
