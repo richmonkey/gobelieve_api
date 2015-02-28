@@ -57,6 +57,7 @@ IMService.prototype.stop = function () {
         return;
     }
     console.log("stop im service");
+    this.stopped = true;
     if (this.socket == null) {
         return;
     }
