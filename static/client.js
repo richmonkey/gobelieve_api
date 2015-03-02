@@ -8,6 +8,8 @@ var msgLocalID=1;
 
 var im;
 var imDB = new IMDB();
+var QRCODE_EXPIRE = 3*60*1000;
+var startup = new Date();
 
 var observer = {
     handlePeerMessage: function (msg) {
@@ -114,7 +116,16 @@ function applogin() {
 	 error : function(xhr, err) {
 	     console.log("login err:", err, xhr.status)
              if (xhr.status == 400) {
-                 console.log("timeout")
+                 console.log("timeout");
+                 var now = new Date();
+                 var t = now.getTime() - startup.getTime();
+                 if (t > QRCODE_EXPIRE) {
+                     //二维码过期
+                     //todo隐藏二维
+                     console.log("qrcode expires");
+                 } else {
+                     applogin();
+                 }
              } else {
              }
 	 }
