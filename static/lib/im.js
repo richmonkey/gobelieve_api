@@ -20,7 +20,6 @@ function IMService(host, port, uid, observer, forceSocket) {
     this.connectState = IMService.STATE_UNCONNECTED;
     this.seq = 0;
     this.stopped = true;
-    this.rst = false
     //sending message
     this.messages = {}
 }
@@ -46,7 +45,6 @@ IMService.prototype.start = function () {
     }
     console.log("start im service");
     this.stopped = false;
-    this.rst = false;
     this.connect()
 }
 
@@ -74,10 +72,6 @@ IMService.prototype.callStateObserver = function () {
 IMService.prototype.connect = function () {
     if (this.stopped) {
         console.log("im service stopped");
-        return;
-    }
-    if (this.rst) {
-        console.log("im service reseted");
         return;
     }
     if (this.socket != null) {
