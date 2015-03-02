@@ -11,7 +11,6 @@ var imDB = new IMDB();
 
 var observer = {
     handlePeerMessage: function (msg) {
-
         console.log("msg sender:", msg.sender, " receiver:", msg.receiver, " content:", msg.content, " timestamp:", msg.timestamp);
 
         try{
@@ -38,11 +37,14 @@ var observer = {
         }
         process.msgTip(msg.sender);
     },
-    handleMessageACK: function(msgLocalID, receiver) {
-        console.log("message ack local id:", msgLocalID, " receiver:", receiver)
+    handleMessageACK: function(msgLocalID, uid) {
+        console.log("message ack local id:", msgLocalID, " uid:", uid);
     },
-    handleMessageFailure: function(msgLocalID, receiver) {
-        console.log("message fail local id:", msgLocalID, " receiver:", receiver)
+    handleMessageRemoteACK: function(msgLocalID, uid) {
+        console.log("message remote ack local id:", msgLocalID, " uid:", uid);
+    },
+    handleMessageFailure: function(msgLocalID, uid) {
+        console.log("message fail local id:", msgLocalID, " uid:", uid);
     },
     onConnectState: function(state) {
         if (state == IMService.STATE_CONNECTED) {

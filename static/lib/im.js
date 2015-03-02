@@ -34,7 +34,6 @@ IMService.MSG_AUTH = 2;
 IMService.MSG_AUTH_STATUS = 3;
 IMService.MSG_IM = 4;
 IMService.MSG_ACK = 5;
-IMService.MSG_RST = 6;
 IMService.MSG_PEER_ACK = 9;
 
 IMService.PLATFORM_ID = 3
@@ -159,11 +158,11 @@ IMService.prototype.onMessage = function (data) {
             }
             delete this.messages[ack]
         }
-    } else if (obj.cmd == IMService.MSG_RST) {
-        this.rst = true
-        if (this.observer != null && "onReset" in this.observer){
-            this.observer.onReset();
-        }        
+    } else if (obj.cmd == IMService.MSG_PEER_ACK) {
+        var msg = obj.body;
+        if (this.observer != null && "handleMessageRemoteACK" in this.observer){
+            this.observer.handleMessageRemoteACK(msg.msgid, msg.sender)
+        }
     } else {
         console.log("message command:" + obj.cmd);
     }
