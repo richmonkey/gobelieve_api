@@ -67,9 +67,11 @@ var htmlLoyout = {
     buildAudio: function (msg) {
         var html = [];
         html.push('<li class="chat-item"  data-id="' + msg.id + '">');
+        var audio_url = msg.audio.url + ".mp3";
+        html.push('<li class="chat-item">');
         html.push('  <div class="message ' + msg.cls + '">');
         html.push('     <div class="bubble">');
-        html.push('       <p class="pre"><audio  controls="controls" src="' + msg.audio.url + '"></audio></p>');
+        html.push('       <p class="pre"><audio  controls="controls" src="' + audio_url + '"></audio></p>');
         html.push('       <span class="time">' + helper.toTime(msg.timestamp * 1000) + '</span>');
         html.push('     </div>');
         html.push('  </div>');
