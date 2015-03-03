@@ -155,7 +155,7 @@ function appendMessage(msg) {
         m.image = msg.contentObj.image;
         process.appendImage(m);
     }
-    console.log("uid:", im.uid, " sender:", msg.sender);
+    console.log("uid:", im.uid, " sender:", msg.sender, " receiver:", msg.receiver);
 }
 
 // add message on board
@@ -231,7 +231,14 @@ $(document).ready(function () {
             return;
         }
         $('#intro').hide();
-        $('#to_user').text(helper.getPhone(uid));
+        $('#to_user').attr('data-uid', uid);
+        user = userDB.findUser(uid);
+        if (user) {
+            $('#to_user').text(helper.getUserName(user));
+        } else {
+            $('#to_user').text(helper.getPhone(uid));
+        }
+
         main.find('.chat-wrap').removeClass('hide');
         _this.addClass('active').siblings().removeClass('active');
         _this.find('.num').text('');
@@ -249,8 +256,8 @@ $(document).ready(function () {
 
     //deal with chat mode.
     $("#entry").keypress(function (e) {
-        var target = parseInt($("#to_user").text());
-        if (e.keyCode != 13 /* Return */) return;
+        if (e.keyCode != 13) return;
+        var target = parseInt($("#to_user").attr("data-uid"));
         var msg = $("#entry").val().replace("\n", "");
         if (!util.isBlank(msg)) {
             var now = new Date();

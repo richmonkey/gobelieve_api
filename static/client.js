@@ -1,6 +1,5 @@
 var accessToken;
 var loginUser = {};
-var users = new Array();
 
 //当前会话的uid
 var peer = 0;
@@ -10,6 +9,33 @@ var im;
 var imDB = new IMDB();
 var QRCODE_EXPIRE = 3 * 60 * 1000;
 var startup = new Date();
+
+var userDB = {
+    users : new Array(),
+    addUser : function(newUser) {
+        var exists = false;
+        for (var i in this.users) {
+            var user = this.users[i];
+            if (user.uid == newUser) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            this.users.push(newUser);
+        }    
+        return !exists;
+    },
+    findUser : function(uid) {
+        for (var i in this.users) {
+            var user = this.users[i];
+            if (user.uid == uid) {
+                return user;
+            }
+        }
+        return null;
+    }
+}
+
 
 var observer = {
     handlePeerMessage: function (msg) {
@@ -25,17 +51,10 @@ var observer = {
             addMessage(msg);
         }
         imDB.saveMessage(msg.sender, msg);
-        var exists = false;
-        for (var i in users) {
-            var user = users[i];
-            if (user.uid == msg.sender) {
-                exists = true;
-            }
-        }
-        if (!exists) {
-            user = {uid: msg.sender};
+        user = {uid : msg.sender};
+        var inserted = userDB.addUser(user);
+        if (inserted) {
             addUser(user);
-            users.push(user)
         }
         process.msgTip(msg.sender);
     },
@@ -88,9 +107,9 @@ function getContactList() {
         dataType: 'json',
         headers: {"Authorization": "Bearer " + accessToken},
         success: function (result, status, xhr) {
-            users = result;
             for (var i in result) {
                 contact = result[i];
+                userDB.addUser(contact);
                 addUser(contact);
                 console.log("contact:", contact, contact.avatar, contact.name, contact.uid);
             }
