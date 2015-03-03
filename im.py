@@ -13,6 +13,7 @@ import audio
 import config
 import user
 import authorization
+import download
 from fs import FS
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ app.register_blueprint(auth.app)
 app.register_blueprint(image.app)
 app.register_blueprint(audio.app)
 app.register_blueprint(user.app)
+app.register_blueprint(download.app)
 
 def init_logger(logger):
     root = logger
