@@ -19,19 +19,33 @@ var helper = {
             return uid.substr(i + 1)
         }
     },
+    getUserAvatar: function (user) {
+        if (user.avatar) {
+            var parser = document.createElement('a');
+            parser.href = user.avatar;
+            return parser.path;
+        } else {
+            return '';
+        }
+    },
     getPhone: function (phone) {
         if (phone) {
             return (phone + '').split('860')[1];
         } else {
             return ''
         }
-    }
+    },
 };
 var htmlLoyout = {
     buildUser: function (user) {
         var html = [];
+
         html.push('<li data-uid="' + user.uid + '">');
-        html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
+        if (user.avatar) {
+            html.push('    <img src="' + helper.getUserAvatar(user) + '" class="avatar" alt=""/>');
+        } else {
+            html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
+        }
         if (helper.getUserName(user)) {
             html.push('    <span class="name">' + helper.getUserName(user) + '</span>');
         }else{
@@ -237,6 +251,9 @@ $(document).ready(function () {
             $('#to_user').text(helper.getUserName(user));
         } else {
             $('#to_user').text(helper.getPhone(uid));
+        }
+        if (user.avatar) {
+            $('#to_user_avatar').src = helper.getUserAvatar(user);
         }
 
         main.find('.chat-wrap').removeClass('hide');
