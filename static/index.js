@@ -1,23 +1,30 @@
 var base = 1000;
 var increase = 25;
 
-function getUserName(user) {
-    if (user.name) {
-        return user.name;
-    } else {
-        var uid = user.uid.toString(),
-            i = uid.indexOf("0");
-        return uid.substr(i + 1)
-    }
-}
 var helper = {
     toTime: function (ts) {
         //时间戳取时间
-        var d= ts ? new Date(ts) :new Date();
+        var d = ts ? new Date(ts) : new Date();
         var H = d.getHours();
         var m = d.getMinutes();
 //            var s = date.getSeconds();
         return H + ':' + (m < 10 ? '0' + m : m);
+    },
+    getUserName: function (user) {
+        if (user.name) {
+            return user.name;
+        } else {
+            var uid = user.uid.toString(),
+                i = uid.indexOf("0");
+            return uid.substr(i + 1)
+        }
+    },
+    getPhone: function (phone) {
+        if (phone) {
+            return (phone + '').split('860')[1];
+        } else {
+            return ''
+        }
     }
 };
 var htmlLoyout = {
@@ -25,17 +32,18 @@ var htmlLoyout = {
         var html = [];
         html.push('<li data-uid="' + user.uid + '">');
         html.push('    <img src="static/images/_avatar.png" class="avatar" alt=""/>');
-        html.push('    <span class="name">' + getUserName(user) + '</span>');
-        html.push('    <span class="uid">' + user.uid + '</span>');
+        if (helper.getUserName(user)) {
+            html.push('    <span class="name">' + helper.getUserName(user) + '</span>');
+        }else{
+            html.push('    <span class="uid">' + helper.getPhone(user.uid) + '</span>');
+        }
         html.push('    <span class="num">' + (user.num || '') + '</span>');
         html.push('</li>');
         return html.join('');
     },
     buildText: function (msg) {
-
-        console.log('===============', msg);
         var html = [];
-        html.push('<li class="chat-item">');
+        html.push('<li class="chat-item" data-id="' + msg.id + '">');
         html.push('    <div class="message ' + msg.cls + '">');
         html.push('        <div class="bubble"><p class="pre">' + msg.text + '</p>');
         html.push('           <span class="time">' + helper.toTime(msg.timestamp * 1000) + '</span>');
@@ -46,8 +54,8 @@ var htmlLoyout = {
     },
     buildImage: function (msg) {
         var html = [];
-        html.push('<li class="chat-item">');
-        html.push('    <div class="message ' + msg.cls + '">');
+        html.push('<li class="chat-item"  data-id="' + msg.id + '">');
+        html.push('    <div class="message">');
         html.push('        <div class="bubble"><p class="pre"><a href="' + msg.image + '" target="_blank">' +
             '<img class="image-thumb-body" src="' + msg.image + '" /></p></a>');
         html.push('           <span class="time">' + helper.toTime(msg.timestamp * 1000) + '</span>');
@@ -58,7 +66,7 @@ var htmlLoyout = {
     },
     buildAudio: function (msg) {
         var html = [];
-        html.push('<li class="chat-item">');
+        html.push('<li class="chat-item"  data-id="' + msg.id + '">');
         html.push('  <div class="message ' + msg.cls + '">');
         html.push('     <div class="bubble">');
         html.push('       <p class="pre"><audio  controls="controls" src="' + msg.audio.url + '"></audio></p>');
@@ -67,6 +75,12 @@ var htmlLoyout = {
         html.push('  </div>');
         html.push('</li>');
         return html.join('');
+    },
+    buildACK: function () {
+        return '<span class="ack"></span>';
+    },
+    buildRACK: function () {
+        return '<span class="rack"></span>';
     }
 };
 var node = {
@@ -88,19 +102,26 @@ var process = {
         node.chatHistory.append(htmlLoyout.buildImage(m));
     },
     msgTip: function (uid) {
-        console.log(uid, 'tip======');
         var userDom = node.usersList.find('li[data-uid="' + uid + '"]'),
+            num = '';
+        if (userDom) {
             num = userDom.find('.num').text();
-        if (!userDom.hasClass('active')) {
-            if (num) {
-                num++;
-            } else {
-                num = 1;
+            if (!userDom.hasClass('active')) {
+                if (num) {
+                    num++;
+                } else {
+                    num = 1;
+                }
+                userDom.find('.num').text(num);
             }
-            userDom.find('.num').text(num);
+            node.usersList.prepend(userDom);
         }
-        node.usersList.prepend(userDom);
-        node.usersList.remove(userDom);
+    },
+    msgACK: function (msgID, uid) {
+        node.chatHistory.find('li[data-id="' + msgID + '"] .bubble').append(htmlLoyout.buildACK());
+    },
+    msgRemoteACK: function (msgID, uid) {
+        node.chatHistory.find('li[data-id="' + msgID + '"] .bubble').append(htmlLoyout.buildRACK());
     }
 };
 
@@ -112,6 +133,7 @@ function scrollDown() {
 function appendMessage(msg) {
     var time = new Date(),
         m = {};
+    m.id = msg.msgLocalID;
     if (msg.timestamp) {
         time.setTime(msg.timestamp * 1000);
         m.timestamp = msg.timestamp;
@@ -207,7 +229,7 @@ $(document).ready(function () {
             return;
         }
         $('#intro').hide();
-        $('#to_user').text(uid);
+        $('#to_user').text(helper.getPhone(uid));
         main.find('.chat-wrap').removeClass('hide');
         _this.addClass('active').siblings().removeClass('active');
         _this.find('.num').text('');
@@ -230,10 +252,8 @@ $(document).ready(function () {
         var msg = $("#entry").val().replace("\n", "");
         if (!util.isBlank(msg)) {
             var now = new Date();
-
-            obj = {"text": msg}
+            var obj = {"text": msg};
             var textMsg = JSON.stringify(obj);
-
             var message = {
                 sender: loginUser.uid,
                 receiver: target,
@@ -241,7 +261,7 @@ $(document).ready(function () {
                 msgLocalID: msgLocalID++,
                 timestamp: (now.getTime() / 1000)
             };
-            message.contentObj = obj
+            message.contentObj = obj;
             if (im.connectState == IMService.STATE_CONNECTED) {
                 imDB.saveMessage(target, message);
                 im.sendPeerMessage(message);

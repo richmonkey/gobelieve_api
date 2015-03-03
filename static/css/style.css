@@ -220,6 +220,17 @@ ul, ol, li {
       content: '';
       display: table;
       clear: both; }
+  .chat-list .ack, .chat-list .rack {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    right: 10px;
+    bottom: 0;
+    background: url(../images/_s.png) no-repeat;
+    background-size: 10px;
+    opacity: .8; }
+    .chat-list .ack.rack, .chat-list .rack.rack {
+      right: 3px; }
   .chat-list .message {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -244,7 +255,7 @@ ul, ol, li {
           content: " \00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a\00a0\00a0\00a"; }
       .chat-list .message .bubble .time {
         position: absolute;
-        right: 20px;
+        right: 28px;
         bottom: 4px;
         font-size: .75em;
         color: #888; }
@@ -372,6 +383,31 @@ ul, ol, li {
   #loginView .img .desc {
     text-align: center;
     line-height: 48px; }
+  #loginView .img .qrcode-timeout {
+    background-color: rgba(0, 0, 0, 0.4);
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    text-align: center; }
+    #loginView .img .qrcode-timeout .icon-reset {
+      height: 80px;
+      margin-top: 30px;
+      background: url(../images/reset-icon.png) no-repeat center center;
+      background-size: 48px; }
+    #loginView .img .qrcode-timeout a {
+      text-decoration: none; }
+      #loginView .img .qrcode-timeout a:hover {
+        text-decoration: none; }
+    #loginView .img .qrcode-timeout .circle {
+      background-color: #009688;
+      display: inline-block;
+      width: 220px;
+      margin-top: 40px;
+      height: 220px;
+      border-radius: 50%; }
+      #loginView .img .qrcode-timeout .circle .reload {
+        margin-top: 20px;
+        color: #fff; }
 
 #usersList ul li {
   position: relative; }
@@ -390,25 +426,15 @@ ul, ol, li {
 
 @media screen and (min-width: 1320px) {
   .app, .app.three {
-    width: 1212px; }
+    width: 1212px; } }
+.pane-list {
+  left: 0; }
 
-  .pane-list {
-    width: 388px;
-    left: 0; }
+.pane-chat {
+  left: 30%;
+  width: 70%; }
 
-  .pane-chat {
-    width: 824px;
-    left: 388px; } }
 @media screen and (min-width: 1200px) {
   .app {
-    width: 1118px; }
+    width: 1118px; } }
 
-  .pane-list {
-    width: 359px;
-    left: 0; }
-
-  .pane-chat {
-    width: 760px;
-    left: 359px; } }
-
-/*# sourceMappingURL=style.css.map */

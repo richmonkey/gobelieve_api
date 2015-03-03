@@ -11,7 +11,6 @@ body {
         width: 6px;
     }
 }
-
 li {
     list-style: none;
 }
@@ -260,6 +259,19 @@ ul, ol, li {
             clear: both;
         }
     }
+    .ack,.rack{
+        position: absolute;
+        width:15px;
+        height: 15px;
+        right: 10px;
+        bottom: 0;
+        background: url(../images/_s.png) no-repeat;
+        background-size: 10px;
+        opacity: .8;
+        &.rack{
+            right: 3px;
+        }
+    }
     .message {
         -webkit-user-select: none;
         -moz-user-select: none;
@@ -287,7 +299,7 @@ ul, ol, li {
             }
             .time{
                 position: absolute;
-                right:20px;
+                right:28px;
                 bottom:4px;
                 font-size: .75em;
                 color:#888;
@@ -439,6 +451,38 @@ ul, ol, li {
             text-align: center;
             line-height: 48px;
         }
+        .qrcode-timeout{
+            background-color:rgba(0,0,0,.4);
+            position: absolute;
+            width:100%;
+            height: 100%;
+            .icon-reset{
+                height: 80px;
+                margin-top: 30px;
+                background: url(../images/reset-icon.png) no-repeat center center;
+                background-size: 48px;
+            }
+            text-align: center;
+            a{
+                text-decoration: none;
+                &:hover{
+                    text-decoration: none;
+                }
+            }
+            .circle{
+                background-color: #009688;
+                display: inline-block;
+                width:220px;
+                margin-top: 40px;
+                height: 220px;
+                border-radius: 50%;
+                .reload{
+                    margin-top: 20px;
+                    color:#fff;
+                }
+            }
+
+        }
     }
 }
 
@@ -470,27 +514,29 @@ ul, ol, li {
     .app, .app.three {
         width: 1212px;
     }
-    .pane-list {
-        width: 388px;
-        left: 0;
-    }
-    .pane-chat {
-        width: 824px;
-        left: 388px;
-    }
 }
 
+.pane-list {
+//    width: 388px;
+    left: 0;
+}
+.pane-chat {
+//    width: 824px;
+//    left: 388px;
+    left:30%;
+    width:70%;
+}
 @media screen and (min-width: 1200px) {
     .app {
         width: 1118px;
     }
-    .pane-list {
-        width: 359px;
-        left: 0;
-    }
-    .pane-chat {
-        width: 760px;
-        left: 359px;
-    }
+//    .pane-list {
+//        width: 359px;
+//        left: 0;
+//    }
+//    .pane-chat {
+//        width: 760px;
+//        left: 359px;
+//    }
 }
 
