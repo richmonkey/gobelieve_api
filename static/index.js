@@ -23,7 +23,7 @@ var helper = {
         if (user.avatar) {
             var parser = document.createElement('a');
             parser.href = user.avatar;
-            return parser.path;
+            return parser.pathname;
         } else {
             return '';
         }
@@ -253,7 +253,7 @@ $(document).ready(function () {
             $('#to_user').text(helper.getPhone(uid));
         }
         if (user.avatar) {
-            $('#to_user_avatar').src = helper.getUserAvatar(user);
+            $('#to_user_avatar').attr("src", helper.getUserAvatar(user));
         }
 
         main.find('.chat-wrap').removeClass('hide');
