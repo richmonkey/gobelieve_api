@@ -254,6 +254,9 @@ $(document).ready(function () {
         }
         if (user.avatar) {
             $('#to_user_avatar').attr("src", helper.getUserAvatar(user));
+        } else {
+            var defaultAvatar = "static/images/_avatar.png";
+            $('#to_user_avatar').attr("src", defaultAvatar);
         }
 
         main.find('.chat-wrap').removeClass('hide');
