@@ -16,7 +16,7 @@ var userDB = {
         var exists = false;
         for (var i in this.users) {
             var user = this.users[i];
-            if (user.uid == newUser) {
+            if (user.uid == newUser.uid) {
                 exists = true;
             }
         }
