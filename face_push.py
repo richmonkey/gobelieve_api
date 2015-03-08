@@ -28,7 +28,7 @@ def receive_offline_message():
         content = obj["content"]
         logging.info("sender:%d receiver:%d token:%s content:%s", 
                      obj["sender"], obj["receiver"], token, content)
-        payload = Payload(alert=content, sound="default", badge=1)
+        payload = Payload(alert=content, sound="apns.caf", badge=1)
         identifier += 1
         for i in range(2):
             if i == 1:
