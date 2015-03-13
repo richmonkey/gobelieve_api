@@ -2,7 +2,7 @@
 project="im_api"
 app_dir="/data/wwwroot/${project}"
 log_dir="/data/logs/${project}"
-image="im_python_dev"
+image="python_dev"
 
 cd ${app_dir} || exit
 unset GIT_DIR
