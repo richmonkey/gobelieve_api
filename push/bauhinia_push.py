@@ -53,7 +53,7 @@ def ios_push(u, body):
             break
         except Exception, e:
             print_exception_traceback()
-            apns = APNs(use_sandbox=config.USE_SANDBOX, cert_file=config.CERT_FILE)
+            apns = APNs(use_sandbox=False, cert_file=config.BAUHINIA_CERT_FILE)
     
 def ng_push(u, body):
     global npush_conn
