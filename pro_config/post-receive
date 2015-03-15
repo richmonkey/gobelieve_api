@@ -9,6 +9,7 @@ unset GIT_DIR
 git pull
 
 cp -f pro_config/config.py ./config.py
+cp -f pro_config/config.py ./push/config.py
 
 mkdir -p ${log_dir}
 
