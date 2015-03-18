@@ -94,7 +94,7 @@ def ng_push(u, body):
             break
         except Exception, e:
             print_exception_traceback()
-            npush_conn = npush.Connection(config.NPUSH_CERT_FILE, config.NPUSH_KEY_FILE)
+            npush_conn = npush.Connection(config.BAUHINIA_NPUSH_CERT_FILE, config.BAUHINIA_NPUSH_KEY_FILE)
 
 def receive_offline_message():
     appid = 17
