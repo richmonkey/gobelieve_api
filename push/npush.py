@@ -57,7 +57,7 @@ class Connection(object):
         self.timeout = timeout
         self._socket = None
         self._ssl = None
-        self.server = "gateway.push.gameservice.com"
+        self.server = "gateway.push.gobelieve.io"
         self.port = 6228
 
     def __del__(self):
