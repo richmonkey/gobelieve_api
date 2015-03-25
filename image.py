@@ -20,7 +20,6 @@ def image_ext(content_type):
         return ""
 
 @app.route('/images', methods=['POST'])
-@require_auth
 def upload_image():
     if not request.data:
         return make_response(400)
