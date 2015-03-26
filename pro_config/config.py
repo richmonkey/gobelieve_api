@@ -11,11 +11,10 @@ DEBUG=False
 #demo
 IM_URL = "http://127.0.0.1:23002"
 
-ANDROID_APP_ID = 8
-ANDROID_APP_SECRET = 'sVDIlIiDUm7tWPYWhi6kfNbrqui3ez44'
+APP_ID = 7
+APP_KEY = "sVDIlIiDUm7tWPYWhi6kfNbrqui3ez44"
+APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 
-IOS_APP_ID = 9
-IOS_APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 
 
 #push
