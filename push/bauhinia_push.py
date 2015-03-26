@@ -3,16 +3,15 @@ import time
 import logging
 import sys
 import redis
-from apns import APNs, Payload
 import json
 import config
 import traceback
-import npush
 import binascii
 
+from ios_push import IOSPush
+from android_push import AndroidPush
+
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
-apns = APNs(use_sandbox=False, cert_file=config.BAUHINIA_CERT_FILE)
-npush_conn = npush.Connection(config.BAUHINIA_NPUSH_CERT_FILE, config.BAUHINIA_NPUSH_KEY_FILE)
 
 
 class User:
@@ -21,6 +20,7 @@ class User:
         self.ng_device_token = None
         self.uid = None
         self.appid = None
+        self.name = ""
 
 def get_user(rds, appid, uid):
     u = User()
@@ -30,94 +30,31 @@ def get_user(rds, appid, uid):
     u.uid = uid
     return u
 
-def ios_push(u, body):
-    global apns
-    token = u.apns_device_token
-    content = json.loads(body)
-
-    if content.has_key("text"):
-        payload = Payload(alert=content["text"], sound="default", badge=1)
-    elif content.has_key("audio"):
-        payload = Payload(alert=u"收到一条语音", sound="default", badge=1)
-    elif content.has_key("image"):
-        payload = Payload(alert=u"收到一张图片", sound="default", badge=1)
-    else:
-        payload = Payload(alert=u"收到一条消息", sound="default", badge=1)
-
-    for i in range(2):
-        if i == 1:
-            logging.warn("resend notification")
-        try:
-            logging.debug("ios push:%s", payload.alert)
-            apns.gateway_server.send_notification(token, payload)
-            break
-        except Exception, e:
-            print_exception_traceback()
-            apns = APNs(use_sandbox=False, cert_file=config.BAUHINIA_CERT_FILE)
-    
-def ng_push(u, body):
-    global npush_conn
-    token = u.ng_device_token
-    token = binascii.a2b_hex(token)
-    content = json.loads(body)
-
-    obj = {}
-    obj["title"] = u"羊蹄甲"
-    obj["push_type"] = 1
-    obj["is_ring"] = True
-    obj["is_vibrate"] = True
-    if content.has_key("text"):
-        obj["content"] = content["text"]
-    elif content.has_key("audio"):
-        obj["content"] = u"收到一条语音"
-    elif content.has_key("image"):
-        obj["content"] = u"收到一张图片"
-    else:
-        obj["content"] = u"收到一条消息"
-
-    obj["package_name"] = "com.beetle.bauhinia"
-    obj["app_params"] = {}
-
-    for i in range(2):
-        if i == 1:
-            logging.warn("resend notification")
-        try:
-            notification = npush.EnhancedNotification()
-            notification.token = token
-            notification.identifier = 1
-            notification.expiry = int(time.time()+3600)
-            notification.payload = json.dumps(obj)
-            logging.debug("ng notification:%s", notification.payload)
-            s = notification.to_data()
-            s = npush.ENHANCED_NOTIFICATION_COMMAND + s
-            npush_conn.write(s)
-            break
-        except Exception, e:
-            print_exception_traceback()
-            npush_conn = npush.Connection(config.BAUHINIA_NPUSH_CERT_FILE, config.BAUHINIA_NPUSH_KEY_FILE)
-
 def receive_offline_message():
-    appid = 17
     while True:
-        item = rds.blpop("push_queue_17")
+        item = rds.blpop("push_queue")
         if not item:
             continue
         _, msg = item
+        logging.debug("push msg:%s", msg)
         obj = json.loads(msg)
+        appid = obj["appid"]
         u = get_user(rds, appid, obj['receiver'])
         if u is None:
             logging.info("uid:%d nonexist", obj["recieiver"])
             continue
 
         if u.apns_device_token:
-            ios_push(u, obj["content"])
-        elif u.ng_device_token:
-            ng_push(u, obj["content"])
-        else:
+            IOSPush.push(appid, u, obj["content"])
+        if u.ng_device_token:
+            AndroidPush.push(appid, u, obj["content"])
+
+        if not u.apns_device_token and not u.ng_device_token:
             logging.info("uid:%d has't device token", obj['receiver'])
             continue
 
 def main():
+    IOSPush.start()
     while True:
         try:
             receive_offline_message()

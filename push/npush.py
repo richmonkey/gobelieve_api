@@ -113,3 +113,8 @@ class Connection(object):
     def write(self, string):
         return self._connection().write(string)
 
+    def write_notification(self, notification):
+        s = notification.to_data()
+        s = ENHANCED_NOTIFICATION_COMMAND + s
+        self.write(s)
+
