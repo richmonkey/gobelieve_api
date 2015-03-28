@@ -39,9 +39,3 @@ APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 
 
 
-#push
-BAUHINIA_CERT_FILE = "./p12/cert.pem"
-
-BAUHINIA_NPUSH_CERT_FILE = "./p12/npush.cer"
-BAUHINIA_NPUSH_KEY_FILE = "./p12/npush.key"
-

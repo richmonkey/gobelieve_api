@@ -127,25 +127,7 @@ class IOSPush(object):
         return apns
 
     @classmethod
-    def push(cls, appid, u, body):
-        token = u.apns_device_token
-        sound = "default"
-        badge = 1
-
-        try:
-            content = json.loads(body)
-            if content.has_key("text"):
-                alert = content["text"]
-            elif content.has_key("audio"):
-                alert = u"收到一条语音"
-            elif content.has_key("image"):
-                alert = u"收到一张图片"
-            else:
-                alert = u"收到一条消息"
-        except ValueError:
-            alert = u"收到一条消息"
-
-
+    def push(cls, appid, token, alert, sound="default", badge=0):
         message = Message([token], alert=alert, badge=badge, sound=sound, extra=None)
 
         for i in range(100):

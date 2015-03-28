@@ -130,32 +130,15 @@ class AndroidPush(object):
             return cls.app_names[appid]
         else:
             return ""
-            
-    @classmethod
-    def push(cls, appid, u, body):
-        token = u.ng_device_token
-        token = binascii.a2b_hex(token)
 
+    @classmethod
+    def push(cls, appid, token, content):
         obj = {}
         obj["title"] = cls.get_title(appid)
         obj["push_type"] = 1
         obj["is_ring"] = True
         obj["is_vibrate"] = True
-
-        try:
-            content = json.loads(body)
-            if content.has_key("text"):
-                obj["content"] = content["text"]
-            elif content.has_key("audio"):
-                obj["content"] = u"你收到一条语音"
-            elif content.has_key("image"):
-                obj["content"] = u"你收到一张图片"
-            else:
-                obj["content"] = u"你收到一条消息"
-        except ValueError:
-            obj["content"] = u"你收到一条消息"
-
-
+        obj["content"] = content
         obj["app_params"] = {}
          
         for i in range(2):
