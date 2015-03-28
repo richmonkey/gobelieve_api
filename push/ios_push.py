@@ -142,7 +142,7 @@ class IOSPush(object):
              
                 for token, (reason, explanation) in result.failed.items():
                     # stop using that token
-                    cls.delete_token(client_id, sandbox, token, reason, explanation, message.get_json_payload())
+                    logging.error("failed token:%s", token)
              
                 for reason, explanation in result.errors:
                     # handle generic errors
