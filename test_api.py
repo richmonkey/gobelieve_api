@@ -11,8 +11,9 @@ import json
 import sys
 
 
+#URL = "http://demo.im.gobelieve.io"
+URL = "http://192.168.33.10:8888"
 
-URL = "http://dev.demo.gobelieve.io"
 
 url = URL + "/auth/token"
 user = {"uid": 1000, "user_name":"test"}
@@ -22,7 +23,8 @@ obj = json.loads(r.text)
 access_token = obj["token"]
 print "token:", access_token
 
-URL = "http://dev.api.gobelieve.io"
+#URL = "http://api.gobelieve.io"
+URL = "http://192.168.33.10:8888"
 
 url = URL + "/images"
 f = open("data/test.jpg", "rb")

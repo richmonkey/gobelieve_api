@@ -162,8 +162,10 @@ class IOSPush(object):
 
     @classmethod
     def receive_p12_update_message(cls):
-        chan_rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB,
-                                     password=config.REDIS_PASSWORD)
+        chan_rds = redis.StrictRedis(host=config.CHAN_REDIS_HOST, 
+                                     port=config.CHAN_REDIS_PORT, 
+                                     db=config.CHAN_REDIS_DB,
+                                     password=config.CHAN_REDIS_PASSWORD)
         sub = chan_rds.pubsub()
         sub.subscribe("apns_update_p12_channel")
         for msg in sub.listen():
