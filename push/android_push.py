@@ -3,7 +3,6 @@ import time
 import logging
 import sys
 import redis
-from apns import APNs, Payload
 import json
 import uuid
 import subprocess
