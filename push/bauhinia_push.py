@@ -10,9 +10,9 @@ import binascii
 
 from ios_push import IOSPush
 from android_push import AndroidPush
+from xg_push import XGPush
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
-
 
 class User:
     def __init__(self):
@@ -25,7 +25,7 @@ class User:
 def get_user(rds, appid, uid):
     u = User()
     key = "users_%s_%s"%(appid, uid)
-    u.apns_device_token, u.ng_device_token = rds.hmget(key, "apns_device_token", "ng_device_token")
+    u.apns_device_token, u.ng_device_token, u.xg_device_token = rds.hmget(key, "apns_device_token", "ng_device_token", "xg_device_token")
     u.appid = appid
     u.uid = uid
     return u
@@ -70,6 +70,23 @@ def android_push(appid, u, body):
 
     AndroidPush.push(appid, token, push_content)
 
+def xg_push(appid, u, body):
+    token = u.xg_device_token
+    try:
+        content = json.loads(body)
+        if content.has_key("text"):
+            push_content  = content["text"]
+        elif content.has_key("audio"):
+            push_content = u"你收到一条语音"
+        elif content.has_key("image"):
+            push_content = u"你收到一张图片"
+        else:
+            push_content = u"你收到一条消息"
+    except ValueError:
+        push_content = u"你收到一条消息"
+
+    XGPush.push(appid, token, push_content)
+    
 def receive_offline_message():
     while True:
         item = rds.blpop("push_queue")
@@ -88,12 +105,15 @@ def receive_offline_message():
             ios_push(appid, u, obj["content"])
         if u.ng_device_token:
             android_push(appid, u, obj["content"])
+        if u.xg_device_token:
+            xg_push(appid, u, obj["content"])
 
-        if not u.apns_device_token and not u.ng_device_token:
+        if not u.apns_device_token and not u.ng_device_token and not u.xg_device_token:
             logging.info("uid:%d has't device token", obj['receiver'])
             continue
 
 def main():
+    logging.debug("startup")
     IOSPush.start()
     while True:
         try:

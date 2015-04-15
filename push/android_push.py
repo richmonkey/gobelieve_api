@@ -16,11 +16,8 @@ import mysql
 import config
 import npush
 
-rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB,
-                        password=config.REDIS_PASSWORD)
-
 mysql = mysql.Mysql.instance(*config.MYSQL_GC)
-
+sandbox = config.SANDBOX
 
 class APNSConnectionManager:
     def __init__(self):
@@ -86,7 +83,7 @@ class AndroidPush(object):
             except Exception, e:
                 logging.info("exception:%s", str(e))
                 continue
-        return None
+        return ""
         
     @staticmethod
     def connect(appid):
@@ -104,7 +101,7 @@ class AndroidPush(object):
         f.write(pkey)
         f.close()
 
-        npush_conn = npush.Connection(cer_file, key_file)
+        npush_conn = npush.Connection(cer_file, key_file, sandbox=sandbox)
         return npush_conn
 
     @classmethod
