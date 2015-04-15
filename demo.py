@@ -46,7 +46,11 @@ def make_response(status_code, data = None):
 def login(uid, uname):
     url = config.IM_URL + "/auth/grant"
     obj = {"uid":uid, "user_name":uname}
-    basic = base64.b64encode(str(config.APP_ID) + ":" + config.APP_SECRET)
+    
+    m = md5.new(config.APP_SECRET)
+    secret = m.hexdigest()
+
+    basic = base64.b64encode(str(config.APP_ID) + ":" + secret)
     headers = {'Content-Type': 'application/json; charset=UTF-8',
                'Authorization': 'Basic ' + basic}
      
