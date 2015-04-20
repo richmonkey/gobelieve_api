@@ -125,8 +125,8 @@ class IOSPush(object):
         return apns
 
     @classmethod
-    def push(cls, appid, token, alert, sound="default", badge=0):
-        message = Message([token], alert=alert, badge=badge, sound=sound, extra=None)
+    def push(cls, appid, token, alert, sound="default", badge=0, extra=None):
+        message = Message([token], alert=alert, badge=badge, sound=sound, extra=extra)
 
         for i in range(100):
             if i > 0:

@@ -85,9 +85,7 @@ class XGPush:
             return ""
 
     @classmethod
-    def push(cls, appid, token, content):
-        #content = content.encode("utf-8")
-        #content = "123"
+    def push(cls, appid, token, content, extra):
         path = "/v2/push/single_device"
         url = XINGE_API + path
 
@@ -95,6 +93,8 @@ class XGPush:
         obj["title"] = cls.get_title(appid)
         obj["content"] = content
         obj["vibrate"] = 1
+        if extra:
+            obj["custom_content"] = extra
 
         app = XGPush.get_xg_app(appid)
         if app is None:

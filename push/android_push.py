@@ -128,14 +128,15 @@ class AndroidPush(object):
             return ""
 
     @classmethod
-    def push(cls, appid, token, content):
+    def push(cls, appid, token, content, extra):
         obj = {}
         obj["title"] = cls.get_title(appid)
         obj["push_type"] = 1
         obj["is_ring"] = True
         obj["is_vibrate"] = True
         obj["content"] = content
-        obj["app_params"] = {}
+        if extra:
+            obj["app_params"] = extra
          
         for i in range(2):
             if i == 1:

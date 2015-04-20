@@ -30,62 +30,56 @@ def get_user(rds, appid, uid):
     u.uid = uid
     return u
 
-def ios_push(appid, u, body):
-    token = u.apns_device_token
+def get_user_name(rds, appid, uid):
+    key = "users_%s_%s"%(appid, uid)
+    return rds.hget(key, "name")
+
+def push_content(sender_name, body):
+    if not sender_name:
+        try:
+            content = json.loads(body)
+            if content.has_key("text"):
+                alert = content["text"]
+            elif content.has_key("audio"):
+                alert = u"你收到了一条消息"
+            elif content.has_key("image"):
+                alert = u"你收到了一张图片"
+            else:
+                alert = u"你收到了一条消息"
+         
+        except ValueError:
+            alert = u"你收到了一条消息"
+
+    else:
+        try:
+            content = json.loads(body)
+            if content.has_key("text"):
+                alert = "%s:%s"%(sender_name, content["text"])
+            elif content.has_key("audio"):
+                alert = "%s%s"%(sender_name, u"发来一条语音消息")
+            elif content.has_key("image"):
+                alert = "%s%s"%(sender_name, u"发来一张图片")
+            else:
+                alert = "%s%s"%(sender_name, u"发来一条消息")
+         
+        except ValueError:
+            alert = "%s%s"%(sender_name, u"发来一条消息")
+    return alert
+    
+    
+def ios_push(appid, token, content, extra):
     sound = "default"
     badge = 1
+    alert = content
 
-    try:
-        content = json.loads(body)
-        if content.has_key("text"):
-            alert = content["text"]
-        elif content.has_key("audio"):
-            alert = u"收到一条语音"
-        elif content.has_key("image"):
-            alert = u"收到一张图片"
-        else:
-            alert = u"收到一条消息"
+    IOSPush.push(appid, token, alert, sound, badge, extra)
 
-    except ValueError:
-        alert = u"收到一条消息"
-
-    IOSPush.push(appid, token, alert, sound, badge)
-
-def android_push(appid, u, body):
-    token = u.ng_device_token
+def android_push(appid, token, content, extra):
     token = binascii.a2b_hex(token)
+    AndroidPush.push(appid, token, content, extra)
 
-    try:
-        content = json.loads(body)
-        if content.has_key("text"):
-            push_content  = content["text"]
-        elif content.has_key("audio"):
-            push_content = u"你收到一条语音"
-        elif content.has_key("image"):
-            push_content = u"你收到一张图片"
-        else:
-            push_content = u"你收到一条消息"
-    except ValueError:
-        push_content = u"你收到一条消息"
-
-    AndroidPush.push(appid, token, push_content)
-
-def xg_push(appid, u, body):
-    token = u.xg_device_token
-    try:
-        content = json.loads(body)
-        if content.has_key("text"):
-            push_content  = content["text"]
-        elif content.has_key("audio"):
-            push_content = u"你收到一条语音"
-        elif content.has_key("image"):
-            push_content = u"你收到一张图片"
-        else:
-            push_content = u"你收到一条消息"
-    except ValueError:
-        push_content = u"你收到一条消息"
-
-    XGPush.push(appid, token, push_content)
+def xg_push(appid, token, content, extra):
+    XGPush.push(appid, token, content, extra)
     
 def receive_offline_message():
     while True:
@@ -95,18 +89,36 @@ def receive_offline_message():
         _, msg = item
         logging.debug("push msg:%s", msg)
         obj = json.loads(msg)
+        if not obj.has_key("appid") or not obj.has_key("sender") or \
+           not obj.has_key("receiver"):
+            logging.warning("invalid push msg:%s", msg)
+            continue
+
         appid = obj["appid"]
-        u = get_user(rds, appid, obj['receiver'])
+        sender = obj["sender"]
+        receiver = obj["receiver"]
+        group_id = obj["group_id"] if obj.has_key("group_id") else 0
+
+        sender_name = get_user_name(rds, appid, sender)
+        content = push_content(sender_name, obj["content"])
+
+        extra = {}
+        extra["sender"] = sender
+        
+        if group_id:
+            extra["group_id"] = group_id
+
+        u = get_user(rds, appid, receiver)
         if u is None:
-            logging.info("uid:%d nonexist", obj["recieiver"])
+            logging.info("uid:%d nonexist", receiver)
             continue
 
         if u.apns_device_token:
-            ios_push(appid, u, obj["content"])
+            ios_push(appid, u.apns_device_token, content, extra)
         if u.ng_device_token:
-            android_push(appid, u, obj["content"])
+            android_push(appid, u.ng_device_token, content, extra)
         if u.xg_device_token:
-            xg_push(appid, u, obj["content"])
+            xg_push(appid, u.xg_device_token, content, extra)
 
         if not u.apns_device_token and not u.ng_device_token and not u.xg_device_token:
             logging.info("uid:%d has't device token", obj['receiver'])
