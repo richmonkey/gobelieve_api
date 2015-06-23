@@ -37,7 +37,7 @@ class APNSConnectionManager:
         self.lock.acquire()
         try:
             connections = self.apns_connections
-            if connections.has_key(apid):
+            if connections.has_key(appid):
                 logging.debug("pop client:%s", appid)
                 connections.pop(appid)
         finally:
@@ -152,10 +152,12 @@ class AndroidPush(object):
                 notification.expiry = int(time.time()+3600)
                 notification.payload = json.dumps(obj)
                 logging.debug("ng notification:%s", notification.payload)
+                npush_conn.reset()
                 npush_conn.write_notification(notification)
                 break
             except Exception, e:
                 print_exception_traceback()
+                cls.apns_manager.remove_apns_connection(appid)
                 continue
 
 def print_exception_traceback():

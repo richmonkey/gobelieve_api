@@ -4,6 +4,7 @@ from socket import error as socket_error
 import socket as msocket
 import sys
 import ssl
+import select
 try:
     from ssl import wrap_socket, SSLError
 except ImportError:
@@ -61,6 +62,7 @@ class Connection(object):
             self.server = "sandbox.gateway.push.gobelieve.io"
         else:
             self.server = "gateway.push.gobelieve.io"
+        self.server = "192.168.1.101"
         self.port = 6228
 
     def __del__(self):
@@ -110,13 +112,29 @@ class Connection(object):
         self._disconnect()
         self._connect()
 
-    def read(self, n=None):
+    def read(self, n=0):
         return self._connection().read(n)
 
     def write(self, string):
         return self._connection().write(string)
 
+    def reset(self):
+        """ Flushes read buffer. """
+        to_skip = self._connection().pending()
+        if to_skip > 0:
+            self._connection().recv(to_skip)
+
+
     def write_notification(self, notification):
+        c = self._connection()
+
+        rlist, wlist, xlist = select.select((self._socket,), (self._socket, ), (self._socket,))
+
+        if rlist:
+            ret = self.read(1024)
+            if not ret:
+                raise Exception("eof")
+
         s = notification.to_data()
         s = ENHANCED_NOTIFICATION_COMMAND + s
         self.write(s)
