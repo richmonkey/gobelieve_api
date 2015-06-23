@@ -62,7 +62,6 @@ class Connection(object):
             self.server = "sandbox.gateway.push.gobelieve.io"
         else:
             self.server = "gateway.push.gobelieve.io"
-        self.server = "192.168.1.101"
         self.port = 6228
 
     def __del__(self):
