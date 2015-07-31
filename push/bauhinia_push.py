@@ -87,16 +87,23 @@ def receive_offline_message():
         if not item:
             continue
         _, msg = item
-        logging.debug("push msg:%s", msg)
         obj = json.loads(msg)
         if not obj.has_key("appid") or not obj.has_key("sender") or \
-           not obj.has_key("receiver"):
+           (not obj.has_key("receiver") and not obj.has_key("receivers")):
             logging.warning("invalid push msg:%s", msg)
             continue
 
+        logging.debug("push msg:%s", msg)
+
         appid = obj["appid"]
         sender = obj["sender"]
-        receiver = obj["receiver"]
+
+        receivers = []
+        if obj.has_key("receiver"):
+            receivers = [obj["receiver"]]
+        elif obj.has_key("receivers"):
+            receivers = obj["receivers"]
+            
         group_id = obj["group_id"] if obj.has_key("group_id") else 0
 
         sender_name = get_user_name(rds, appid, sender)
@@ -108,21 +115,22 @@ def receive_offline_message():
         if group_id:
             extra["group_id"] = group_id
 
-        u = get_user(rds, appid, receiver)
-        if u is None:
-            logging.info("uid:%d nonexist", receiver)
-            continue
-
-        if u.apns_device_token:
-            ios_push(appid, u.apns_device_token, content, extra)
-        if u.ng_device_token:
-            android_push(appid, u.ng_device_token, content, extra)
-        if u.xg_device_token:
-            xg_push(appid, u.xg_device_token, content, extra)
-
-        if not u.apns_device_token and not u.ng_device_token and not u.xg_device_token:
-            logging.info("uid:%d has't device token", obj['receiver'])
-            continue
+        for receiver in receivers:
+            u = get_user(rds, appid, receiver)
+            if u is None:
+                logging.info("uid:%d nonexist", receiver)
+                continue
+             
+            if u.apns_device_token:
+                ios_push(appid, u.apns_device_token, content, extra)
+            if u.ng_device_token:
+                android_push(appid, u.ng_device_token, content, extra)
+            if u.xg_device_token:
+                xg_push(appid, u.xg_device_token, content, extra)
+             
+            if not u.apns_device_token and not u.ng_device_token and not u.xg_device_token:
+                logging.info("uid:%d has't device token", receiver)
+                continue
 
 def main():
     logging.debug("startup")
