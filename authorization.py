@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from flask import request
+from flask import g
 from functools import wraps
 from util import make_response
 import logging
 import random
 import time
 import json
+import md5
+import base64
+
 
 rds = None
 
-
 def access_token_key(token):
     return "access_token_" + token
-
 
 class AccessToken(object):
     def __init__(self):
@@ -35,6 +37,18 @@ def INVALID_ACCESS_TOKEN():
     logging.warn("非法的access token")
     return make_response(400, e)
 
+def INVALID_APPID():
+    meta = {"message":"非法的appid", "code":400}
+    e = {"meta":meta}
+    logging.warn("非法的appid")
+    return make_response(400, e)
+
+def INVALID_AUTHORIZATION():
+    meta = {"message":"非法的authorization", "code":400}
+    e = {"meta":meta}
+    logging.warn("非法的authorization")
+    return make_response(400, e)
+
 
 def require_auth(f):
     """Protect resource with specified scopes."""
@@ -47,8 +61,75 @@ def require_auth(f):
         t = AccessToken()
         if not t.load(rds, tok):
             return INVALID_ACCESS_TOKEN()
-        request.uid = t.user_id
-        request.appid = t.app_id
+        request.uid = int(t.user_id)
+        request.appid = int(t.app_id)
         return f(*args, **kwargs)
     return wrapper
   
+def get_app_secret(db, appid):
+    sql = "SELECT `key`, secret FROM app WHERE id=%s"
+    cursor = db.execute(sql, appid)
+    obj = cursor.fetchone()
+    return obj["secret"]
+    
+def require_application_auth(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if 'Authorization' in request.headers:
+            basic = request.headers.get('Authorization')[6:]
+        else:
+            return INVALID_APPID()
+        logging.debug("basic:%s", basic)
+        basic = base64.b64decode(basic)
+        sp = basic.split(":", 1)
+        if len(sp) != 2:
+            return INVALID_APPID()
+        appid = int(sp[0])
+        appsecret = sp[1]
+        secret = get_app_secret(g._db, appid)
+        secret = md5.new(secret).digest().encode("hex")
+        logging.debug("app secret:%s, %s", appsecret, secret)
+        if appsecret != secret:
+            return INVALID_APPID()
+        request.appid = appid
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def require_application_or_person_auth(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if 'Authorization' in request.headers:
+            auth = request.headers.get('Authorization')
+        else:
+            return INVALID_AUTHORIZATION()
+
+        if auth[:6] == "Basic ":
+            logging.debug("basic:%s", basic)
+            basic = auth[6:]
+            basic = base64.b64decode(basic)
+            sp = basic.split(":", 1)
+            if len(sp) != 2:
+                return INVALID_APPID()
+            appid = int(sp[0])
+            appsecret = sp[1]
+            secret = get_app_secret(g._db, appid)
+            secret = md5.new(secret).digest().encode("hex")
+            logging.debug("app secret:%s, %s", appsecret, secret)
+            if appsecret != secret:
+                return INVALID_APPID()
+            request.appid = appid
+            return f(*args, **kwargs)
+        elif auth[:7] == "Bearer ":
+            tok = auth[7:]
+            t = AccessToken()
+            if not t.load(rds, tok):
+                return INVALID_ACCESS_TOKEN()
+            request.uid = int(t.user_id)
+            request.appid = int(t.app_id)
+            return f(*args, **kwargs)
+        else:
+            return INVALID_AUTHORIZATION()
+
+    return wrapper
+    
