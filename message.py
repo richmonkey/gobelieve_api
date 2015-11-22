@@ -67,9 +67,17 @@ def post_peer_messages():
 @require_application_auth
 def post_system_message():
     appid = request.appid
+    obj = json.loads(request.data)
+    uid = obj["receiver"]
+    content = obj["content"]
 
-    url = im_url + "/post_system_message"
-    resp = requests.post(url, data=request.data)
+    params = {
+        "appid":appid,
+        "uid":uid
+    }
+    url = im_url + "/post_system_message?" + urlencode(params)
+
+    resp = requests.post(url, data=content)
     if resp.status_code == 200:
         return flask.make_response("", 200)
     else:
