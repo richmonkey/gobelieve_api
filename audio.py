@@ -35,6 +35,7 @@ def amr_to_mp3(data):
 
 
 @app.route('/audios', methods=['POST'])
+@require_auth
 def upload_file():
     if not request.data:
         return NO_CONTENT()
