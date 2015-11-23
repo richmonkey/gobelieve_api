@@ -105,7 +105,6 @@ def require_application_or_person_auth(f):
             return INVALID_AUTHORIZATION()
 
         if auth[:6] == "Basic ":
-            logging.debug("basic:%s", basic)
             basic = auth[6:]
             basic = base64.b64decode(basic)
             sp = basic.split(":", 1)
