@@ -153,6 +153,15 @@ def update_group(gid):
     obj = json.loads(request.data)
     name = obj["name"]
     Group.update_group_name(g._imdb, gid, name)
+
+    v = {
+        "group_id":gid,
+        "timestamp":int(time.time()),
+        "name":name
+    }
+    op = {"update_group_name":v}
+    send_group_notification(appid, gid, op, None)
+
     return ""
 
 @app.route("/groups/<int:gid>/members", methods=["POST"])
