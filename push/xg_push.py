@@ -12,7 +12,7 @@ XINGE_API = "http://openapi.xg.qq.com"
 HTTP_METHOD = "POST"
 XINGE_HOST = "openapi.xg.qq.com"
 
-mysql = mysql.Mysql.instance(*config.MYSQL_GC)
+mysql = mysql.Mysql.instance(*config.MYSQL)
 
 
 def GenSign(path, params, secretKey):

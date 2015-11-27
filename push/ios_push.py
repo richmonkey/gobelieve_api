@@ -16,7 +16,7 @@ import config
 from mysql import Mysql
 
 
-mysql = Mysql.instance(*config.MYSQL_GC)
+mysql = Mysql.instance(*config.MYSQL)
 
 sandbox = config.SANDBOX
 

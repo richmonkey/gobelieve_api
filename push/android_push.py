@@ -16,7 +16,7 @@ import mysql
 import config
 import npush
 
-mysql = mysql.Mysql.instance(*config.MYSQL_GC)
+mysql = mysql.Mysql.instance(*config.MYSQL)
 sandbox = config.SANDBOX
 
 class APNSConnectionManager:
