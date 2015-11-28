@@ -169,19 +169,30 @@ def update_group(gid):
 def add_group_member(gid):
     appid = request.appid
     obj = json.loads(request.data)
-    member_id = obj["uid"]
-    Group.add_group_member(g._imdb, gid, member_id)
+    if type(obj) is dict:
+        members = [obj["uid"]]
+    else:
+        members = obj
 
-    v = {
-        "group_id":gid,
-        "member_id":member_id,
-        "timestamp":int(time.time())
-    }
-    op = {"add_member":v}
-    send_group_notification(appid, gid, op, [member_id])
+    if len(members) == 0:
+        return ""
 
-    content = "%d,%d"%(gid, member_id)
-    publish_message("group_member_add", content)
+    g._imdb.begin()
+    for member_id in members:
+        Group.add_group_member(g._imdb, gid, member_id)
+    g._imdb.commit()
+
+    for member_id in members:
+        v = {
+            "group_id":gid,
+            "member_id":member_id,
+            "timestamp":int(time.time())
+        }
+        op = {"add_member":v}
+        send_group_notification(appid, gid, op, [member_id])
+         
+        content = "%d,%d"%(gid, member_id)
+        publish_message("group_member_add", content)
 
     return ""
 
