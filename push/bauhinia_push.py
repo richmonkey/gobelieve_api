@@ -25,10 +25,19 @@ class User:
 def get_user(rds, appid, uid):
     u = User()
     key = "users_%s_%s"%(appid, uid)
-    u.apns_device_token, u.ng_device_token, u.xg_device_token = rds.hmget(key, "apns_device_token", "ng_device_token", "xg_device_token")
+    u.apns_device_token, apns_ts, u.ng_device_token, ng_ts, u.xg_device_token, xg_ts, unread = rds.hmget(key, "apns_device_token", "apns_timestamp", "ng_device_token", "ng_timestamp", "xg_device_token", "xg_timestamp", "unread")
+
     u.appid = appid
     u.uid = uid
+    u.unread = int(unread) if unread else 0
+    u.apns_timestamp = int(apns_ts) if apns_ts else 0
+    u.ng_timestamp = int(ng_ts) if ng_ts else 0
+    u.xg_timestamp = int(xg_ts) if xg_ts else 0
     return u
+
+def set_user_unread(rds, appid, uid, unread):
+    key = "users_%s_%s"%(appid, uid)
+    rds.hset(key, "unread", unread)
 
 def get_user_name(rds, appid, uid):
     key = "users_%s_%s"%(appid, uid)
@@ -67,11 +76,9 @@ def push_content(sender_name, body):
     return alert
     
     
-def ios_push(appid, token, content, extra):
+def ios_push(appid, token, content, badge, extra):
     sound = "default"
-    badge = 1
     alert = content
-
     IOSPush.push(appid, token, alert, sound, badge, extra)
 
 def android_push(appid, token, content, extra):
@@ -121,11 +128,15 @@ def receive_offline_message():
                 logging.info("uid:%d nonexist", receiver)
                 continue
              
-            if u.apns_device_token:
-                ios_push(appid, u.apns_device_token, content, extra)
-            if u.ng_device_token:
+            #找出最近绑定的token
+            ts = max(u.apns_timestamp, u.xg_timestamp, u.ng_timestamp)
+
+            if u.apns_device_token and u.apns_timestamp == ts:
+                ios_push(appid, u.apns_device_token, content, u.unread + 1, extra)
+                set_user_unread(rds, appid, receiver, u.unread+1)
+            elif u.ng_device_token and u.ng_timestamp == ts:
                 android_push(appid, u.ng_device_token, content, extra)
-            if u.xg_device_token:
+            elif u.xg_device_token and u.xg_timestamp == ts:
                 xg_push(appid, u.xg_device_token, content, extra)
              
             if not u.apns_device_token and not u.ng_device_token and not u.xg_device_token:

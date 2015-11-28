@@ -128,14 +128,14 @@ class IOSPush(object):
     def push(cls, appid, token, alert, sound="default", badge=0, extra=None):
         message = Message([token], alert=alert, badge=badge, sound=sound, extra=extra)
 
-        for i in range(100):
+        for i in range(3):
             if i > 0:
                 logging.warn("resend notification")
 
             apns = cls.get_connection(appid)
              
             try:
-                logging.debug("send apns:%s", message.tokens)
+                logging.debug("send apns:%s %s %s", message.tokens, alert, badge)
                 result = apns.send(message)
              
                 for token, (reason, explanation) in result.failed.items():
@@ -153,6 +153,7 @@ class IOSPush(object):
                     continue
                 else:
                     break
+            
             except Exception, e:
                 logging.warn("send notification exception:%s", str(e))
                 cls.apns_manager.remove_apns_connection(appid)
