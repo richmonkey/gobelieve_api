@@ -114,6 +114,7 @@ def receive_offline_message():
         group_id = obj["group_id"] if obj.has_key("group_id") else 0
 
         sender_name = get_user_name(rds, appid, sender)
+        sender_name = sender_name.decode("utf8")
         content = push_content(sender_name, obj["content"])
 
         extra = {}
