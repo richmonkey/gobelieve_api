@@ -200,7 +200,7 @@ def add_group_member(gid):
 @require_application_or_person_auth
 def delete_group_member(gid, memberid):
     appid = request.appid
-    if request.uid > 0:
+    if hasattr(request, "uid") and request.uid > 0:
         #群组管理员或者成员本身有权限退出群
         if memberid != request.uid:
             master = Group.get_group_master(g._imdb, gid)
