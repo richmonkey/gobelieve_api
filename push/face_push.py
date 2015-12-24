@@ -4,31 +4,17 @@ import logging
 import sys
 import redis
 import json
-import config
 import traceback
 import binascii
-
+import config
+import mysql
 from ios_push import IOSPush
-from android_push import AndroidPush
+import user
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
+mysql = mysql.Mysql.instance(*config.MYSQL)
 
-
-class User:
-    def __init__(self):
-        self.apns_device_token = None
-        self.ng_device_token = None
-        self.uid = None
-        self.appid = None
-        self.name = ""
-
-def get_user(rds, appid, uid):
-    u = User()
-    key = "users_%s_%s"%(appid, uid)
-    u.apns_device_token, u.ng_device_token = rds.hmget(key, "apns_device_token", "ng_device_token")
-    u.appid = appid
-    u.uid = uid
-    return u
+IOSPush.mysql = mysql
 
 def ios_push(appid, u, content):
     token = u.apns_device_token
@@ -46,7 +32,7 @@ def receive_offline_message():
         logging.debug("push msg:%s", msg)
         obj = json.loads(msg)
         appid = obj["appid"]
-        u = get_user(rds, appid, obj['receiver'])
+        u = user.get_user(rds, appid, obj['receiver'])
         if u is None:
             logging.info("uid:%d nonexist", obj["recieiver"])
             continue

@@ -11,12 +11,9 @@ from OpenSSL import crypto
 import os
 import traceback
 import threading
-
+import application
 import config
-from mysql import Mysql
-
-
-mysql = Mysql.instance(*config.MYSQL)
+import time
 
 sandbox = config.SANDBOX
 
@@ -53,63 +50,22 @@ class APNSConnectionManager:
 
 
 class IOSPush(object):
+    mysql = None
     apns_manager = APNSConnectionManager()
-
-    @staticmethod
-    def get_p12(appid):
-        for i in range(2):
-            try:
-                sql = '''select sandbox_key, sandbox_key_secret, sandbox_key_utime,
-                          production_key, production_key_secret, production_key_utime
-                          from client_apns, client where client.app_id=%s and client.id=client_apns.client_id'''
-                cursor = mysql.execute(sql, appid)
-                obj = cursor.fetchone()
-                if sandbox:
-                    p12 = obj["sandbox_key"]
-                    secret = obj["sandbox_key_secret"]
-                    timestamp = obj["sandbox_key_utime"]
-                else:
-                    p12 = obj["production_key"]
-                    secret = obj["production_key_secret"]
-                    timestamp = obj["production_key_utime"]
-
-                return p12, secret, timestamp
-            except Exception, e:
-                logging.info("exception:%s", str(e))
-                continue
-
-        return None, None, None
 
     @staticmethod
     def gen_pem(p12, secret):
         p12 = crypto.load_pkcs12(p12, str(secret))
         priv_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey())
         pub_key = crypto.dump_certificate(crypto.FILETYPE_PEM, p12.get_certificate())
-        return priv_key + pub_key
+        return  pub_key, priv_key
 
-    @classmethod
-    def connect_apns(cls, appid):
-        logging.debug("connecting apns")
-        p12, secret, timestamp = cls.get_p12(appid)
-        if not p12:
-            return None
-
-        if sandbox:
-            pem_file = "/tmp/app_%s_sandbox_%s.pem" % (appid, timestamp)
-            address = 'push_sandbox'
-        else:
-            pem_file = "/tmp/app_%s_%s.pem" % (appid, timestamp)
-            address = 'push_production'
-
-        if not os.path.isfile(pem_file):
-            pem = cls.gen_pem(p12, secret)
-            f = open(pem_file, "wb")
-            f.write(pem)
-            f.close()
-
+    @classmethod 
+    def connect_apns_server(cls, sandbox, p12, secret, timestamp):
+        pub_key, priv_key = cls.gen_pem(p12, secret)
         session = Session(read_tail_timeout=1)
-
-        conn = session.get_connection(address, cert_file=pem_file)
+        address = 'push_sandbox' if sandbox else 'push_production'
+        conn = session.get_connection(address, cert_string=pub_key, key_string=priv_key)
         apns = APNs(conn)
         return apns
 
@@ -117,10 +73,12 @@ class IOSPush(object):
     def get_connection(cls, appid):
         apns = cls.apns_manager.get_apns_connection(appid)
         if not apns:
-            apns = cls.connect_apns(appid)
-            if not apns:
+            p12, secret, timestamp = application.get_p12(cls.mysql, sandbox, appid)
+            if not p12:
                 logging.warn("get p12 fail client id:%s", appid)
                 return None
+            
+            apns = cls.connect_apns_server(sandbox, p12, secret, timestamp)
             cls.apns_manager.set_apns_connection(appid, apns)
         return apns
 
@@ -191,3 +149,20 @@ class IOSPush(object):
         t = threading.Thread(target=cls.update_p12_thread, args=())
         t.setDaemon(True)
         t.start()
+
+
+if __name__ == "__main__":
+    f = open("imdemo_dev.p12", "rb")
+    p12 = f.read()
+    f.close()
+
+    token = "177bbe6da89125b84bfad60ff3d729005792fad4ebbbf5729a8cecc79365a218"
+    alert = "测试ios推送"
+    badge = 0
+
+    apns = IOSPush.connect_apns_server(True, p12, "", 0)
+    message = Message([token], alert=alert, badge=badge, sound="default")
+    result = apns.send(message)
+    print result
+    
+

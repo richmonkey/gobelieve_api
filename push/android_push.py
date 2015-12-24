@@ -12,11 +12,10 @@ import traceback
 import threading
 import socket
 import binascii
-import mysql
+import application
 import config
 import npush
 
-mysql = mysql.Mysql.instance(*config.MYSQL)
 sandbox = config.SANDBOX
 
 class APNSConnectionManager:
@@ -51,43 +50,15 @@ class APNSConnectionManager:
             self.lock.release()
 
 
-class AndroidPush(object):
+class SmartPush(object):
+    mysql = None
     apns_manager = APNSConnectionManager()
     app_names = {}
 
-    @staticmethod
-    def get_certificate(appid):
-        for i in range(2):
-            try:
-                sql = '''select cc.cer as cer, cc.pkey as pkey
-                          from app, client as c, client_certificate as cc where c.app_id=%s and c.id=cc.client_id'''
-                cursor = mysql.execute(sql, appid)
-                obj = cursor.fetchone()
-                cer = obj["cer"]
-                key = obj["pkey"]
-                return cer, key
-            except Exception, e:
-                logging.info("exception:%s", str(e))
-                continue
-
-        return None, None
-
-    @staticmethod
-    def get_app_name(appid):
-        for i in range(2):
-            try:
-                sql = "select name from app where id=%s"
-                cursor = mysql.execute(sql, appid)
-                obj = cursor.fetchone()
-                return obj["name"]
-            except Exception, e:
-                logging.info("exception:%s", str(e))
-                continue
-        return ""
         
-    @staticmethod
-    def connect(appid):
-        cer, pkey = AndroidPush.get_certificate(appid)
+    @classmethod
+    def connect(cls, appid):
+        cer, pkey = application.get_certificate(cls.mysql, appid)
         if cer is None or pkey is None:
             return None
 
@@ -115,22 +86,11 @@ class AndroidPush(object):
             cls.apns_manager.set_apns_connection(appid, apns)
         return apns
 
-    @classmethod
-    def get_title(cls, appid):
-        if not cls.app_names.has_key(appid):
-            name = cls.get_app_name(appid)
-            if name is not None:
-                cls.app_names[appid] = name
-
-        if cls.app_names.has_key(appid):
-            return cls.app_names[appid]
-        else:
-            return ""
 
     @classmethod
-    def push(cls, appid, token, content, extra):
+    def push(cls, appid, appname, token, content, extra):
         obj = {}
-        obj["title"] = cls.get_title(appid)
+        obj["title"] = appname
         obj["push_type"] = 1
         obj["is_ring"] = True
         obj["is_vibrate"] = True

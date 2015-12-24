@@ -8,40 +8,39 @@ import config
 import traceback
 import binascii
 
+import mysql
 from ios_push import IOSPush
-from android_push import AndroidPush
+from android_push import SmartPush
 from xg_push import XGPush
+from huawei import HuaWeiPush
+from gcm import GCMPush
+from mipush import MiPush
+
+import application
+import user
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
+mysql_db = mysql.Mysql.instance(*config.MYSQL)
 
-class User:
-    def __init__(self):
-        self.apns_device_token = None
-        self.ng_device_token = None
-        self.uid = None
-        self.appid = None
-        self.name = ""
+IOSPush.mysql = mysql_db
+SmartPush.mysql = mysql_db
+XGPush.mysql = mysql_db
+HuaWeiPush.mysql = mysql_db
+GCMPush.mysql = mysql_db
+MiPush.mysql = mysql_db
 
-def get_user(rds, appid, uid):
-    u = User()
-    key = "users_%s_%s"%(appid, uid)
-    u.apns_device_token, apns_ts, u.ng_device_token, ng_ts, u.xg_device_token, xg_ts, unread = rds.hmget(key, "apns_device_token", "apns_timestamp", "ng_device_token", "ng_timestamp", "xg_device_token", "xg_timestamp", "unread")
+app_names = {}
 
-    u.appid = appid
-    u.uid = uid
-    u.unread = int(unread) if unread else 0
-    u.apns_timestamp = int(apns_ts) if apns_ts else 0
-    u.ng_timestamp = int(ng_ts) if ng_ts else 0
-    u.xg_timestamp = int(xg_ts) if xg_ts else 0
-    return u
+def get_title(appid):
+    if not app_names.has_key(appid):
+        name = application.get_app_name(mysql_db, appid)
+        if name is not None:
+            app_names[appid] = name
 
-def set_user_unread(rds, appid, uid, unread):
-    key = "users_%s_%s"%(appid, uid)
-    rds.hset(key, "unread", unread)
-
-def get_user_name(rds, appid, uid):
-    key = "users_%s_%s"%(appid, uid)
-    return rds.hget(key, "name")
+    if app_names.has_key(appid):
+        return app_names[appid]
+    else:
+        return ""
 
 def push_content(sender_name, body):
     if not sender_name:
@@ -75,19 +74,18 @@ def push_content(sender_name, body):
         except ValueError:
             alert = "%s%s"%(sender_name, u"发来一条消息")
     return alert
-    
-    
+
 def ios_push(appid, token, content, badge, extra):
     sound = "default"
     alert = content
     IOSPush.push(appid, token, alert, sound, badge, extra)
 
-def android_push(appid, token, content, extra):
+def android_push(appid, appname, token, content, extra):
     token = binascii.a2b_hex(token)
-    AndroidPush.push(appid, token, content, extra)
+    SmartPush.push(appid, appname, token, content, extra)
 
-def xg_push(appid, token, content, extra):
-    XGPush.push(appid, token, content, extra)
+def xg_push(appid, appname, token, content, extra):
+    XGPush.push(appid, appname, token, content, extra)
     
 def receive_offline_message():
     while True:
@@ -114,7 +112,9 @@ def receive_offline_message():
             
         group_id = obj["group_id"] if obj.has_key("group_id") else 0
 
-        sender_name = get_user_name(rds, appid, sender)
+        appname = get_title(appid)
+        sender_name = user.get_user_name(rds, appid, sender)
+
         content = push_content(sender_name, obj["content"])
 
         extra = {}
@@ -124,23 +124,28 @@ def receive_offline_message():
             extra["group_id"] = group_id
 
         for receiver in receivers:
-            u = get_user(rds, appid, receiver)
+            u = user.get_user(rds, appid, receiver)
             if u is None:
                 logging.info("uid:%d nonexist", receiver)
                 continue
              
             #找出最近绑定的token
-            ts = max(u.apns_timestamp, u.xg_timestamp, u.ng_timestamp)
+            ts = max(u.apns_timestamp, u.xg_timestamp, u.ng_timestamp, u.mi_timestamp, u.hw_timestamp, u.gcm_timestamp)
 
             if u.apns_device_token and u.apns_timestamp == ts:
                 ios_push(appid, u.apns_device_token, content, u.unread + 1, extra)
-                set_user_unread(rds, appid, receiver, u.unread+1)
+                user.set_user_unread(rds, appid, receiver, u.unread+1)
             elif u.ng_device_token and u.ng_timestamp == ts:
-                android_push(appid, u.ng_device_token, content, extra)
+                android_push(appid, appname, u.ng_device_token, content, extra)
             elif u.xg_device_token and u.xg_timestamp == ts:
-                xg_push(appid, u.xg_device_token, content, extra)
-             
-            if not u.apns_device_token and not u.ng_device_token and not u.xg_device_token:
+                xg_push(appid, appname, u.xg_device_token, content, extra)
+            elif u.mi_device_token and u.mi_timestamp == ts:
+                MiPush.push(appid, appname, u.mi_device_token, content)
+            elif u.hw_device_token and u.hw_timestamp == ts:
+                HuaWeiPush.push(appid, appname, u.hw_device_token, content)
+            elif u.gcm_device_token and u.gcm_timestamp == ts:
+                GCMPush.push(appid, appname, u.gcm_device_token, content)
+            else:
                 logging.info("uid:%d has't device token", receiver)
                 continue
 

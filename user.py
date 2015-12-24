@@ -72,7 +72,9 @@ class User(object):
 
     @staticmethod
     def save_user_device_token(rds, appid, uid, device_token, 
-                               ng_device_token, xg_device_token):
+                               ng_device_token, xg_device_token,
+                               xm_device_token, hw_device_token,
+                               gcm_device_token):
         now = int(time.time())
         key = "users_%d_%d"%(appid, uid)
 
@@ -96,19 +98,42 @@ class User(object):
                 "xg_timestamp":now
             }
             rds.hmset(key, obj)
+            
+        if xm_device_token:
+            obj = {
+                "xm_device_token":xm_device_token,
+                "xm_timestamp":now
+            }
+            rds.hmset(key, obj)
 
+        if hw_device_token:
+            obj = {
+                "hw_device_token":hw_device_token,
+                "hw_timestamp":now
+            }
+            rds.hmset(key, obj)
+        
+        if gcm_device_token:
+            obj = {
+                "gcm_device_token":gcm_device_token,
+                "gcm_timestamp":now
+            }
+            rds.hmset(key, obj)
+            
         return True
 
 
     #重置(清空)用户已经绑定的devicetoken
     @staticmethod
-    def reset_user_device_token(rds, appid, uid, device_token, ng_device_token, xg_device_token):
+    def reset_user_device_token(rds, appid, uid, device_token, 
+                                ng_device_token, xg_device_token, 
+                                xm_device_token, hw_device_token, 
+                                gcm_device_token):
         key = "users_%d_%d"%(appid, uid)
         if device_token:
             t = rds.hget(key, "apns_device_token")
             if device_token == t:
                 return False
-
             rds.hdel(key, "apns_device_token")
 
         if ng_device_token:
@@ -122,8 +147,31 @@ class User(object):
             if xg_device_token == t:
                 return False
             rds.hdel(key, "xg_device_token")
+
+        if xm_device_token:
+            t = rds.hget(key, "xm_device_token")
+            if xm_device_token == t:
+                return False
+            rds.hdel(key, "xm_device_token")
+
+        if hw_device_token:
+            t = rds.hget(key, "hw_device_token")
+            if hw_device_token == t:
+                return False
+            rds.hdel(key, "hw_device_token")
+
+        if gcm_device_token:
+            t = rds.hget(key, "gcm_device_token")
+            if gcm_device_token == t:
+                return False
+            rds.hdel(key, "gcm_device_token")
         
         return True
+
+    @staticmethod
+    def set_user_name(rds, appid, uid, name):
+        key = "users_%d_%d"%(appid, uid)
+        rds.hset(key, "name", name)
 
     @staticmethod
     def add_user_count(rds, appid, uid):
@@ -156,12 +204,19 @@ def bind_device_token():
     device_token = obj["apns_device_token"] if obj.has_key("apns_device_token") else ""
     ng_device_token = obj["ng_device_token"] if obj.has_key("ng_device_token") else ""
     xg_device_token = obj["xg_device_token"] if obj.has_key("xg_device_token") else ""
+    xm_device_token = obj["xm_device_token"] if obj.has_key("xm_device_token") else ""
+    hw_device_token = obj["hw_device_token"] if obj.has_key("hw_device_token") else ""
+    gcm_device_token = obj["gcm_device_token"] if obj.has_key("gcm_device_token") else ""
 
-    if not device_token and not ng_device_token and not xg_device_token:
+    if not device_token and not ng_device_token and not xg_device_token and \
+       not xm_device_token and not hw_device_token and not gcm_device_token:
         raise ResponseMeta(400, "invalid param")
 
+
     User.save_user_device_token(rds, appid, uid, device_token, 
-                               ng_device_token, xg_device_token)
+                                ng_device_token, xg_device_token,
+                                xm_device_token, hw_device_token,
+                                gcm_device_token)
     return ""
 
 @app.route("/device/unbind", methods=["POST"])
@@ -173,12 +228,29 @@ def unbind_device_token():
     device_token = obj["apns_device_token"] if obj.has_key("apns_device_token") else ""
     ng_device_token = obj["ng_device_token"] if obj.has_key("ng_device_token") else ""
     xg_device_token = obj["xg_device_token"] if obj.has_key("xg_device_token") else ""
+    xm_device_token = obj["xm_device_token"] if obj.has_key("xm_device_token") else ""
+    hw_device_token = obj["hw_device_token"] if obj.has_key("hw_device_token") else ""
+    gcm_device_token = obj["gcm_device_token"] if obj.has_key("gcm_device_token") else ""
 
-    if not device_token and not ng_device_token and not xg_device_token:
+    if not device_token and not ng_device_token and not xg_device_token and \
+       not xm_device_token and not hw_device_token and not gcm_device_token:
         raise ResponseMeta(400, "invalid param")
 
     User.reset_user_device_token(rds, appid, uid, device_token, 
-                                 ng_device_token, xg_device_token)
+                                 ng_device_token, xg_device_token, 
+                                 xm_device_token, hw_device_token,
+                                 gcm_device_token)
 
     return ""
 
+@app.route("/users/<int:uid>", methods=["POST"])
+@require_application_auth
+def set_user_name(uid):
+    appid = request.appid
+    obj = json.loads(request.data)
+    name = obj["name"] if obj.has_key("name") else ""
+    if not name:
+        raise ResponseMeta(400, "invalid param")
+
+    User.set_user_name(rds, appid, uid, name)
+    return ""
