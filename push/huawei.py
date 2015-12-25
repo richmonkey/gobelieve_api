@@ -11,6 +11,7 @@ LOGIN_URL="https://login.vmall.com/oauth2/token";
 HUAWEI_URL = "https://api.vmall.com/rest.php";
 
 class HuaWeiPush:
+    session = requests.session()
     mysql = None
     hw_apps = {}
     hw_token = {}
@@ -75,7 +76,7 @@ class HuaWeiPush:
             "nsp_svc":"openpush.openapi.notification_send"
         }
         headers = {"Content-Type":"application/x-www-form-urlencoded"}
-        resp = requests.post(HUAWEI_URL, data=data, headers=headers)
+        resp = cls.session.post(HUAWEI_URL, data=data, headers=headers)
         if resp.status_code != 200:
             logging.error("send huawei message error:%s", resp.content)
         else:

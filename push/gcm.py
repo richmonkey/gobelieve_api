@@ -10,6 +10,11 @@ import config
 GCM_URL = "https://gcm-http.googleapis.com/gcm/send"
 
 class GCMPush:
+    session = requesocks.session() 
+    session.proxies = {
+        'http': config.SOCKS5_PROXY,
+        'https': config.SOCKS5_PROXY,
+    }
     mysql = None
     gcm_apps = {}
         
@@ -44,13 +49,9 @@ class GCMPush:
         headers = {'Content-Type': 'application/json; charset=UTF-8',
                    'Authorization': 'key=' + api_key}
 
-        session = requesocks.session() 
-        session.proxies = {
-            'http': config.SOCKS5_PROXY,
-            'https': config.SOCKS5_PROXY,
-        }
 
-        res = session.post(GCM_URL, data=json.dumps(obj), headers=headers)
+
+        res = cls.session.post(GCM_URL, data=json.dumps(obj), headers=headers)
         if res.status_code != 200:
             logging.error("send gcm message error")
         else:

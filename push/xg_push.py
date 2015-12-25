@@ -5,7 +5,6 @@ import time
 import json
 import hashlib
 import logging
-import mysql
 import application
 
 XINGE_API = "http://openapi.xg.qq.com"
@@ -20,6 +19,7 @@ def GenSign(path, params, secretKey):
     return hashlib.md5(signSource).hexdigest()
 
 class XGPush:
+    session = requests.session()
     mysql = None
     xg_apps = {}
     app_names = {}
@@ -69,7 +69,7 @@ class XGPush:
         params["sign"] = GenSign(path, params, secret_key)
         headers = {"content-type":"application/x-www-form-urlencoded"}
          
-        r = requests.post(url, headers=headers, data=params)
+        r = cls.session.post(url, headers=headers, data=params)
         return r.status_code == 200
         
     @classmethod
@@ -81,3 +81,11 @@ class XGPush:
 
         return cls.send(app["access_id"], app["secret_key"], token, 
                         appname, content, extra)
+
+
+if __name__ == "__main__":
+    access_id = "2100103204"
+    secret_key = "53c1be217035aa75c1ccb5770b5df9f9"
+    token = "adb238518d682b2e49cba26c207f04a712c6da46"
+    XGPush.send(access_id, secret_key, token, "test", "测试信鸽推送", None)
+

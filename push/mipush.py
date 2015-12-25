@@ -9,6 +9,7 @@ import time
 MI_URL = "https://api.xmpush.xiaomi.com/v2/message/regid"
 
 class MiPush:
+    session = requests.session()
     mysql = None
     mi_apps = {}
         
@@ -41,7 +42,7 @@ class MiPush:
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'key=' + mi_app_secret}
 
-        res = requests.post(MI_URL, data=obj, headers=headers)
+        res = cls.session.post(MI_URL, data=obj, headers=headers)
         if res.status_code != 200:
             logging.error("send xiaomi message error")
         else:
