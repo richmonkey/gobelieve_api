@@ -20,6 +20,8 @@ sandbox = config.SANDBOX
 class APNSConnectionManager:
     def __init__(self):
         self.apns_connections = {}
+        #上次访问的时间戳,丢弃超过20m未用的链接
+        self.connection_timestamps = {}
         self.lock = threading.Lock()
 
     def get_apns_connection(self, appid):
@@ -27,6 +29,14 @@ class APNSConnectionManager:
         try:
             connections = self.apns_connections
             apns = connections[appid] if connections.has_key(appid) else None
+            if apns:
+                ts = self.connection_timestamps[appid]
+                now = int(time.time())
+                # > 10minute
+                if (now - ts) > 20*60:
+                    apns = None
+                else:
+                    self.connection_timestamps[appid] = now
         finally:
             self.lock.release()
         return apns
@@ -45,6 +55,7 @@ class APNSConnectionManager:
         self.lock.acquire()
         try:
             self.apns_connections[appid] = connection
+            self.connection_timestamps[appid] = int(time.time())
         finally:
             self.lock.release()
 
@@ -159,9 +170,15 @@ if __name__ == "__main__":
     token = "177bbe6da89125b84bfad60ff3d729005792fad4ebbbf5729a8cecc79365a218"
     alert = "测试ios推送"
     badge = 0
+    sound = "default"
+    #alert = None
+    #badge = None
+    #sound = None
 
+    extra = {"test":1, "test2":2}
     apns = IOSPush.connect_apns_server(True, p12, "", 0)
-    message = Message([token], alert=alert, badge=badge, sound="default")
+    message = Message([token], alert=alert, badge=badge, 
+                      sound=sound, extra=extra)
     result = apns.send(message)
     print result
     
