@@ -8,9 +8,12 @@ from flask import g
 import logging
 import json
 import time
+import umysql
 from authorization import require_application_or_person_auth
+from group_model import Group
 
 from util import make_response
+from response_meta import ResponseMeta
 
 app = Blueprint('group', __name__)
 
@@ -41,60 +44,6 @@ def send_group_notification(appid, gid, op, members):
     else:
         logging.debug("send group notification success:%s", data)
 
-class Group(object):
-    @staticmethod
-    def create_group(db, appid, master, name, is_super, members):
-        db.begin()
-        sql = "INSERT INTO `group`(appid, master, name, super) VALUES(%s, %s, %s, %s)"
-
-        s = 1 if is_super else 0
-        r = db.execute(sql, (appid, master, name, s))
-        group_id = r.lastrowid
-        
-        for m in members:
-            sql = "INSERT INTO group_member(group_id, uid) VALUES(%s, %s)"
-            db.execute(sql, (group_id, m))
-        
-        db.commit()
-        return group_id
-
-    @staticmethod
-    def update_group_name(db, group_id, name):
-        sql = "UPDATE `group` SET name=%s WHERE id=%s"
-        r = db.execute(sql, (name, group_id))
-        logging.debug("update group rows:%s", r.rowcount)
-
-    @staticmethod
-    def disband_group(db, group_id):
-        db.begin()
-        sql = "DELETE FROM `group` WHERE id=%s"
-        r = db.execute(sql, group_id)
-        logging.debug("rows:%s", r.rowcount)
-
-        sql = "DELETE FROM group_member WHERE group_id=%s"
-        r = db.execute(sql, group_id)
-        logging.debug("delete group rows:%s", r.rowcount)
-        db.commit()
-
-    @staticmethod
-    def add_group_member(db, group_id, member_id):
-        sql = "INSERT INTO group_member(group_id, uid) VALUES(%s, %s)"
-        r = db.execute(sql, (group_id, member_id))
-        logging.debug("insert rows:%s", r.rowcount)
-
-    @staticmethod
-    def delete_group_member(db, group_id, member_id):
-        sql = "DELETE FROM group_member WHERE group_id=%s AND uid=%s"
-        r = db.execute(sql, (group_id, member_id))
-        logging.debug("delete group member rows:%s", r.rowcount)
-
-    @staticmethod
-    def get_group_master(db, group_id):
-        sql = "SELECT master FROM `group` WHERE id=%s"
-        cursor = db.execute(sql, group_id)
-        r = cursor.fetchone()
-        master = r["master"]
-        return master
         
 @app.route("/groups", methods=["POST"])
 @require_application_or_person_auth
@@ -179,7 +128,13 @@ def add_group_member(gid):
 
     g._imdb.begin()
     for member_id in members:
-        Group.add_group_member(g._imdb, gid, member_id)
+        try:
+            Group.add_group_member(g._imdb, gid, member_id)
+        except umysql.SQLError, e:
+            #1062 duplicate member
+            if e[0] != 1062:
+                raise
+
     g._imdb.commit()
 
     for member_id in members:

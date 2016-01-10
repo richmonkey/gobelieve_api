@@ -121,6 +121,12 @@ def TestGroup():
 
 
     url = URL + "/groups/%s/members"%str(group_id)
+    r = requests.post(url, data=json.dumps({"uid":13635273143}), headers = headers)
+    print r.content
+    assert(r.status_code == 200)
+
+
+    url = URL + "/groups/%s/members"%str(group_id)
     r = requests.post(url, data=json.dumps([13635273144,13635273145]), headers = headers)
     assert(r.status_code == 200)
 
@@ -193,8 +199,37 @@ def TestDeviceToken():
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
 
+def TestCustomerService():
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    url = URL + "/applications/%s"%APP_ID
+
+    obj = {"customer_service":True}
+    r = requests.patch(url, data=json.dumps(obj), headers=headers)
+    assert(r.status_code == 200)
+    print "enable customer service success"
+
+    obj = {"customer_service_mode":3}
+    r = requests.patch(url, data=json.dumps(obj), headers=headers)
+    assert(r.status_code == 200)
+    print "set customer service mode:3 success"
+
+    url = URL + "/applications/%s/staffs"%APP_ID
+    obj = {"staff_uid":100, "staff_name":"客服100"}
+    r = requests.post(url, data=json.dumps(obj), headers=headers)
+    assert(r.status_code == 200)
+    print "add customer service staff success"
+
+    url = URL + "/applications/%s/staffs/%s"%(APP_ID, 100)
+    r = requests.delete(url, headers=headers)
+    assert(r.status_code == 200)
+    print "remove customer service staff success"
     
-#TestImage()
-#TestAudio()
-#TestGroup()
+TestImage()
+TestAudio()
+TestGroup()
 TestDeviceToken()
+TestCustomerService()
