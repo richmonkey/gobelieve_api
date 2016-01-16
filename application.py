@@ -8,6 +8,7 @@ import logging
 from response_meta import ResponseMeta
 from group_model import Group
 from user_model import User
+from user_model import Staff
 from util import make_response
 from authorization import require_application_auth
 
@@ -73,12 +74,10 @@ def update_applicaton(appid):
 
     return ""
 
-@app.route("/applications/<int:appid>/staffs", methods=['POST'])
+@app.route("/staffs", methods=['POST'])
 @require_application_auth
-def add_customer_service_staff(appid):
-    if request.appid != appid:
-        raise ResponseMeta(400, "invalid appid")
-
+def add_customer_service_staff():
+    appid = request.appid
     obj = json.loads(request.data)
     staff_uid = obj['staff_uid']
     staff_name = obj['staff_name']
@@ -99,20 +98,30 @@ def add_customer_service_staff(appid):
     obj = {'id':staff_uid}
     return make_response(200, obj)
 
-@app.route("/applications/<int:appid>/staffs/<int:staff_id>", methods=['DELETE'])
+@app.route("/staffs/<int:staff_id>", methods=['DELETE', 'PATCH'])
 @require_application_auth
-def remove_customer_service_staff(appid, staff_id):
-    if request.appid != appid:
-        raise ResponseMeta(400, "invalid appid")
+def remove_customer_service_staff(staff_id):
+    appid = request.appid
+    if request.method == 'DELETE':
+        group_id = Application.get_application_cs_group(g._db, appid)
+        if group_id == 0:
+            raise ResponseMeta(400, "application customer service is disabled")
+         
+        Group.delete_group_member(g._imdb, group_id, staff_id)
+         
+        content = "%d,%d"%(group_id, staff_id)
+        publish_message("group_member_remove", content)
+    elif request.method == "PATCH":
+        obj = json.loads(request.data)
+         
+        if obj.has_key("state"):
+            state = obj['state']
+            if state != "online" and state != "offline":
+                raise ResponseMeta(400, "invalid state")
 
-    group_id = Application.get_application_cs_group(g._db, appid)
-    if group_id == 0:
-        raise ResponseMeta(400, "application customer service is disabled")
-
-    Group.delete_group_member(g._imdb, group_id, staff_id)
-
-    content = "%d,%d"%(group_id, staff_id)
-    publish_message("group_member_remove", content)
-
+            if state == "online":
+                Staff.add_online(rds, appid, staff_id)
+            else:
+                Staff.remove_online(rds, appid, staff_id)
+        
     return ""
-    

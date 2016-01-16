@@ -148,3 +148,14 @@ class User(object):
     @staticmethod
     def add_user_count(rds, appid, uid):
         pass
+
+class Staff(object):
+    @staticmethod
+    def add_online(rds, appid, uid):
+        key = "customer_service_online_%d"%appid
+        rds.sadd(key, uid)
+
+    @staticmethod
+    def remove_online(rds, appid, uid):
+        key = "customer_service_online_%d"%appid
+        rds.srem(key, uid)

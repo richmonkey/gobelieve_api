@@ -212,18 +212,18 @@ def TestCustomerService():
     assert(r.status_code == 200)
     print "enable customer service success"
 
-    obj = {"customer_service_mode":3}
+    obj = {"customer_service_mode":1}
     r = requests.patch(url, data=json.dumps(obj), headers=headers)
     assert(r.status_code == 200)
     print "set customer service mode:3 success"
 
-    url = URL + "/applications/%s/staffs"%APP_ID
+    url = URL + "/staffs"
     obj = {"staff_uid":100, "staff_name":"客服100"}
     r = requests.post(url, data=json.dumps(obj), headers=headers)
     assert(r.status_code == 200)
     print "add customer service staff success"
 
-    url = URL + "/applications/%s/staffs/%s"%(APP_ID, 100)
+    url = URL + "/staffs/%s"%100
     r = requests.delete(url, headers=headers)
     assert(r.status_code == 200)
     print "remove customer service staff success"
