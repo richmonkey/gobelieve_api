@@ -50,6 +50,9 @@ def enable_customer_service(appid):
     content = "%d,%d,%d"%(group_id, appid, 0)
     publish_message("group_create", content)
 
+    content = "%d"%appid
+    publish_message("application_update", content)
+
     
 @app.route("/applications/<int:appid>", methods=['PATCH'])
 @require_application_auth
@@ -71,6 +74,8 @@ def update_applicaton(appid):
         if mode != 1 and mode != 2 and mode != 3:
             raise ResponseMeta(400, "do not support customer service mode:%s"%mode)
         Application.set_application_cs_mode(g._db, appid, mode)
+        content = "%d"%appid
+        publish_message("application_update", content)
 
     return ""
 
