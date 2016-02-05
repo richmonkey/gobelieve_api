@@ -9,12 +9,31 @@ import binascii
 import config
 import mysql
 from ios_push import IOSPush
+from huawei import HuaWeiPush
+from mipush import MiPush
 import user
+import application
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
-mysql = mysql.Mysql.instance(*config.MYSQL)
+mysql_db = mysql.Mysql.instance(*config.MYSQL)
 
-IOSPush.mysql = mysql
+IOSPush.mysql = mysql_db
+HuaWeiPush.mysql = mysql_db
+MiPush.mysql = mysql_db
+
+app_names = {}
+
+def get_title(appid):
+    if not app_names.has_key(appid):
+        name = application.get_app_name(mysql_db, appid)
+        if name is not None:
+            app_names[appid] = name
+
+    if app_names.has_key(appid):
+        return app_names[appid]
+    else:
+        return ""
+
 
 def ios_push(appid, u, content):
     token = u.apns_device_token
@@ -32,16 +51,32 @@ def receive_offline_message():
         logging.debug("push msg:%s", msg)
         obj = json.loads(msg)
         appid = obj["appid"]
-        u = user.get_user(rds, appid, obj['receiver'])
+        sender = obj["sender"]
+        receiver = obj["receiver"]
+
+        appname = get_title(appid)
+        sender_name = user.get_user_name(rds, appid, sender)
+        u = user.get_user(rds, appid, receiver)
         if u is None:
-            logging.info("uid:%d nonexist", obj["recieiver"])
+            logging.info("uid:%d nonexist", receiver)
             continue
+        #找出最近绑定的token
+        ts = max(u.apns_timestamp, u.xg_timestamp, u.ng_timestamp, u.mi_timestamp, u.hw_timestamp, u.gcm_timestamp)
 
-        if u.apns_device_token:
-            ios_push(appid, u, u"您的朋友请求与您通话")
+        if sender_name:
+            sender_name = sender_name.decode("utf8")
+            content = "%s:%s"%(sender_name, u"请求与你通话")
+        else:
+            content = u"你的朋友请求与你通话"
 
-        if not u.apns_device_token:
-            logging.info("uid:%d has't device token", obj['receiver'])
+        if u.apns_device_token and u.apns_timestamp == ts:
+            ios_push(appid, u, content)
+        elif u.mi_device_token and u.mi_timestamp == ts:
+            MiPush.push_message(appid, u.mi_device_token, content)
+        elif u.hw_device_token and u.hw_timestamp == ts:
+            HuaWeiPush.push_message(appid, u.hw_device_token, content)
+        else:
+            logging.info("uid:%d has't device token", receiver)
             continue
 
 def main():

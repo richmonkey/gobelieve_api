@@ -47,7 +47,7 @@ class HuaWeiPush:
             "client_id":hw_appid,
             "client_secret":hw_app_secret
         }
-        resp = requests.post(LOGIN_URL, data=data, headers=headers)
+        resp = requests.post(LOGIN_URL, data=data, headers=headers, verify=False)
         if resp.status_code != 200:
             logging.error("hw login error:%s", resp.content)
             return None
@@ -76,7 +76,31 @@ class HuaWeiPush:
             "nsp_svc":"openpush.openapi.notification_send"
         }
         headers = {"Content-Type":"application/x-www-form-urlencoded"}
-        resp = cls.session.post(HUAWEI_URL, data=data, headers=headers)
+        resp = cls.session.post(HUAWEI_URL, data=data, headers=headers, verify=False)
+        if resp.status_code != 200:
+            logging.error("send huawei message error:%s", resp.content)
+        else:
+            logging.error("send huawei message success:%s", resp.content)
+
+        return resp.status_code == 200
+
+    @classmethod
+    def send_message(cls, access_token, device_token, msg_type, cache_mode, message):
+        #cache mode 0：不缓存 1：缓存
+        #msg_type 标识消息类型（缓存机制），由调用端赋值，取值范围（1~100）。当TMID+msgType的值一样时，仅缓存最新的一条消息
+        data = {
+            "access_token":access_token,
+            "deviceToken":device_token,
+            'message':message,
+            'msgType':msg_type,
+            'cacheMode':cache_mode,
+            'priority':1,
+            "nsp_ts":str(int(time.time())),
+            "nsp_fmt":"JSON",
+            "nsp_svc":"openpush.message.single_send"
+        }
+        headers = {"Content-Type":"application/x-www-form-urlencoded"}
+        resp = cls.session.post(HUAWEI_URL, data=data, headers=headers, verify=False)
         if resp.status_code != 200:
             logging.error("send huawei message error:%s", resp.content)
         else:
@@ -98,11 +122,25 @@ class HuaWeiPush:
         cls.send(access_token, token, appname, content)
 
 
+    @classmethod
+    def push_message(cls, appid, token, message):
+        app = cls.get_app(appid)
+        if app is None:
+            logging.warning("")
+            return
+
+        access_token = cls.get_access_token(app["hw_appid"], app["hw_app_secret"])
+        if access_token is None:
+            return
+        
+        cls.send_message(access_token, token, 1, 0, message)
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
-    APP_ID = 10415486
-    APP_SECRET = "t4zfciyu29v7qbppobu87ewh9teccprx"
-    token = "08650300127619392000000630000001"
+    APP_ID = 10417737
+    APP_SECRET = "80ungj5bjx00g269oeqs9t2fnkyhe5wr"
+    token = "08645870275867432000000638000001"
     access_token = HuaWeiPush.get_access_token(APP_ID, APP_SECRET)
     print "token:", access_token
     HuaWeiPush.send(access_token, token, "test", "测试华为推送")
+    HuaWeiPush.send_message(access_token, token, 1, 0, "测试华为消息推送")
