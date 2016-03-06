@@ -128,7 +128,12 @@ def receive_offline_message():
             if u is None:
                 logging.info("uid:%d nonexist", receiver)
                 continue
-             
+            if group_id:
+                quiet = user.get_user_notification_setting(rds, appid, receiver, group_id)
+                if quiet:
+                    logging.info("uid:%d group id:%d is in quiet mode", receiver, group_id)
+                    continue
+
             #找出最近绑定的token
             ts = max(u.apns_timestamp, u.xg_timestamp, u.ng_timestamp, u.mi_timestamp, u.hw_timestamp, u.gcm_timestamp)
 

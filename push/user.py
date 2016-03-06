@@ -30,3 +30,9 @@ def set_user_unread(rds, appid, uid, unread):
 def get_user_name(rds, appid, uid):
     key = "users_%s_%s"%(appid, uid)
     return rds.hget(key, "name")
+
+def get_user_notification_setting(rds, appid, uid, group_id):
+    key = "users_%s_%s"%(appid, uid)
+    quiet = rds.hget(key, "group_%d"%group_id)
+    quiet = int(quiet) if quiet else 0
+    return quiet
