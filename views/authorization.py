@@ -3,7 +3,7 @@
 from flask import request
 from flask import g
 from functools import wraps
-from util import make_response
+from libs.util import make_response
 import logging
 import random
 import time

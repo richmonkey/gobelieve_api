@@ -9,11 +9,11 @@ import logging
 import json
 import time
 import random
-from util import make_response
+from libs.util import make_response
 from authorization import require_application_or_person_auth
 from authorization import require_application_auth
 from authorization import require_auth
-from user_model import User
+from models.user_model import User
 
 app = Blueprint('user', __name__)
 

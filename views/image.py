@@ -3,10 +3,10 @@ from flask import Flask
 import flask
 import md5
 import json
-from  thumbnail import *
-from fs import FS
+from  libs.thumbnail import *
+from libs.fs import FS
 from flask import request, Blueprint
-from util import make_response
+from libs.util import make_response
 from authorization import require_auth
 
 app = Blueprint('image', __name__)

@@ -11,19 +11,19 @@ import os
 import random
 import redis
 
-import image
-import audio
-import message
-import group
-import user
-import notification
-import application
+from views import image
+from views import audio
+from views import message
+from views import group
+from views import user
+from views import notification
+from views import application
 
 import config
-import authorization
-from response_meta import ResponseMeta
-from mysql import Mysql
-from fs import FS
+from views import authorization
+from libs.response_meta import ResponseMeta
+from libs.mysql import Mysql
+from libs.fs import FS
 
 
 app = Flask(__name__)

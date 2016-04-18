@@ -5,11 +5,11 @@ from flask import g
 import json
 import umysql
 import logging
-from response_meta import ResponseMeta
-from group_model import Group
-from user_model import User
-from user_model import Staff
-from util import make_response
+from libs.response_meta import ResponseMeta
+from models.group_model import Group
+from models.user_model import User
+from models.user_model import Staff
+from libs.util import make_response
 from authorization import require_application_auth
 
 app = Blueprint('application', __name__)
