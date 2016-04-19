@@ -23,7 +23,7 @@ MYSQL_USER = "im"
 MYSQL_PASSWD = "123456"
 
 
-MYSQL_IM_DATABASE = "im"
+MYSQL_IM_DATABASE = "gobelieve"
 MYSQL_GB_DATABASE = "gobelieve"
 
 
