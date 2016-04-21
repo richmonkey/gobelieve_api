@@ -89,7 +89,7 @@ def require_application_auth(f):
         secret = get_app_secret(g._db, appid)
         secret = md5.new(secret).digest().encode("hex")
         logging.debug("app secret:%s, %s", appsecret, secret)
-        if appsecret != secret:
+        if appsecret.lower() != secret.lower():
             return INVALID_APPID()
         request.appid = appid
         return f(*args, **kwargs)
@@ -115,7 +115,7 @@ def require_application_or_person_auth(f):
             secret = get_app_secret(g._db, appid)
             secret = md5.new(secret).digest().encode("hex")
             logging.debug("app secret:%s, %s", appsecret, secret)
-            if appsecret != secret:
+            if appsecret.lower() != secret.lower():
                 return INVALID_APPID()
             request.appid = appid
             return f(*args, **kwargs)
