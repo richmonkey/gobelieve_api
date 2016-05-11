@@ -7,6 +7,9 @@ import md5
 import json
 import logging
 import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
 import os
 import random
 import redis
