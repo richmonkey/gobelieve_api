@@ -77,7 +77,8 @@ def post_system_message():
     }
     url = im_url + "/post_system_message?" + urlencode(params)
 
-    resp = requests.post(url, data=content)
+    headers = {"Content-Type":"text/plain; charset=UTF-8"}
+    resp = requests.post(url, data=content.encode("utf8"), headers=headers)
     if resp.status_code == 200:
         return flask.make_response("", 200)
     else:
