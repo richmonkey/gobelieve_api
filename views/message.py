@@ -84,6 +84,30 @@ def post_system_message():
     else:
         return flask.make_response(resp.content, resp.status_code)
 
+#发送系统消息
+@app.route('/messages/rooms', methods=['POST'])
+@require_application_auth
+def post_room_message():
+    appid = request.appid
+    obj = json.loads(request.data)
+    sender = obj["sender"]
+    receiver = obj["receiver"]
+    content = obj["content"]
+
+    params = {
+        "appid":appid,
+        "uid":sender,
+        "room":receiver
+    }
+    url = im_url + "/post_room_message?" + urlencode(params)
+
+    headers = {"Content-Type":"text/plain; charset=UTF-8"}
+    resp = requests.post(url, data=content.encode("utf8"), headers=headers)
+    if resp.status_code == 200:
+        return flask.make_response("", 200)
+    else:
+        return flask.make_response(resp.content, resp.status_code)
+
 
 @app.route('/messages', methods=['GET'])
 @require_auth
