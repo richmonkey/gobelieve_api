@@ -127,3 +127,16 @@ def get_gcm_key(mysql, appid):
             continue
 
     return None, None
+
+#获取微信公众号id
+def get_wx(db, appid):
+    for i in range(2):
+        try:
+            sql = "SELECT wx.gh_id as gh_id, wx.wx_app_id as wx_app_id, wx.wx_app_secret as wx_app_secret, wx.template_id as template_id FROM client, client_wx as wx where client.app_id=%s and client.id=wx.client_id"
+            r = db.execute(sql, appid)
+            obj = r.fetchone()
+            return obj
+        except Exception, e:
+            continue
+
+    return None

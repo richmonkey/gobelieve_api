@@ -15,6 +15,7 @@ from xg_push import XGPush
 from huawei import HuaWeiPush
 from gcm import GCMPush
 from mipush import MiPush
+from wx_push import WXPush
 
 import application
 import user
@@ -32,6 +33,9 @@ XGPush.mysql = mysql_db
 HuaWeiPush.mysql = mysql_db
 GCMPush.mysql = mysql_db
 MiPush.mysql = mysql_db
+
+WXPush.mysql = mysql_db
+WXPush.rds = rds
 
 app_names = {}
 
@@ -104,12 +108,9 @@ def android_push(appid, appname, token, content, extra):
 def xg_push(appid, appname, token, content, extra):
     XGPush.push(appid, appname, token, content, extra)
 
-def push_message(appid, appname, receiver, content, extra):
-    u = user.get_user(rds, appid, receiver)
-    if u is None:
-        logging.info("uid:%d nonexist", receiver)
-        return
 
+def push_message_u(appid, appname, u, content, extra):
+    receiver = u.uid
     #找出最近绑定的token
     ts = max(u.apns_timestamp, u.xg_timestamp, u.ng_timestamp, u.mi_timestamp, u.hw_timestamp, u.gcm_timestamp)
 
@@ -128,7 +129,14 @@ def push_message(appid, appname, receiver, content, extra):
         GCMPush.push(appid, appname, u.gcm_device_token, content)
     else:
         logging.info("uid:%d has't device token", receiver)
+
+def push_message(appid, appname, receiver, content, extra):
+    u = user.get_user(rds, appid, receiver)
+    if u is None:
+        logging.info("uid:%d nonexist", receiver)
         return
+
+    push_message_u(appid, appname, u, content, extra)
 
 def handle_im_message(msg):
     obj = json.loads(msg)
@@ -201,14 +209,24 @@ def handle_customer_message(msg):
     elif command == MSG_CUSTOMER_SUPPORT:
         if appid == customer_appid:
             #客服发给顾客
-            store = Store.get_store(rds, store)
-            sender_name = store.name
+            u = user.get_user(rds, appid, receiver)
+            if u is None:
+                logging.info("uid:%d nonexist", receiver)
+                return
+
+            if u.wx_openid:
+                WXPush.push(appid, appname, u.wx_openid, raw_content)
+            else:
+                store = Store.get_store(rds, store)
+                sender_name = store.name
+                content = push_content(sender_name, raw_content)
+                push_message_u(appid, appname, u, content, extra)
         else:
             #群发到其它客服人员
             sender_name = user.get_user_name(rds, appid, seller)
+            content = push_content(sender_name, raw_content)
+            push_message(appid, appname, receiver, content, extra)
 
-        content = push_content(sender_name, raw_content)
-        push_message(appid, appname, receiver, content, extra)
         
 
 def receive_offline_message():
