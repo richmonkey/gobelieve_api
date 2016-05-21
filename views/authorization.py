@@ -10,7 +10,7 @@ import time
 import json
 import md5
 import base64
-
+import config
 
 rds = None
 
@@ -67,6 +67,10 @@ def require_auth(f):
     return wrapper
   
 def get_app_secret(db, appid):
+    if hasattr(config, "APPID") and hasattr(config, "APPSECRET"):
+        if config.APPID == appid:
+            return config.APPSECRET
+        
     sql = "SELECT `key`, secret FROM app WHERE id=%s"
     cursor = db.execute(sql, appid)
     obj = cursor.fetchone()
