@@ -31,6 +31,22 @@ def create_access_token():
     return random_token_generator()
 
 
+im_url=config.IM_RPC_URL
+
+def init_message_queue(appid, uid, platform_id, device_id):
+    obj = {
+        "appid":appid,
+        "uid":uid,
+        "device_id":device_id,
+        "platform_id":platform_id
+    }
+
+    url = im_url + "/init_message_queue"
+    logging.debug("url:%s", url)
+    headers = {"Content-Type":"application/json"}
+    res = requests.post(url, data=json.dumps(obj), headers=headers)
+    return res.status_code == 200
+
 @app.route("/auth/grant", methods=["POST"])
 @require_application_auth
 def grant_auth_token():
@@ -45,6 +61,15 @@ def grant_auth_token():
 
     User.save_user_access_token(rds, appid, uid, name, token)
 
+    if obj.has_key("platform_id") and obj.has_key("device_id"):
+        platform_id = obj['platform_id']
+        device_id = obj['device_id']
+        s = init_message_queue(appid, uid, platform_id, device_id)
+        if s:
+            logging.error("init message queue success")
+        else:
+            logging.error("init message queue fail")
+        
     data = {"data":{"token":token}}
     return make_response(200, data)
 
