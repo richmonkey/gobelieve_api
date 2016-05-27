@@ -6,6 +6,7 @@ from flask import request, Blueprint
 import flask
 import logging
 import json
+from libs.crossdomain import crossdomain
 from authorization import require_application_auth
 from authorization import require_auth
 
@@ -109,7 +110,11 @@ def post_room_message():
         return flask.make_response(resp.content, resp.status_code)
 
 
-@app.route('/messages', methods=['GET'])
+MSG_CUSTOMER = 24;
+MSG_CUSTOMER_SUPPORT = 25;
+
+@app.route('/messages', methods=['GET', 'OPTIONS'])
+@crossdomain(origin='*', headers=['Authorization'])
 @require_auth
 def get_history_message():
     appid = request.appid
@@ -121,9 +126,20 @@ def get_history_message():
         "limit":limit
     }
     
+    store_id = request.args.get('store')
+    if store_id:
+        store_id = int(store_id)
     url = im_url + "/load_latest_message?" + urlencode(params)
     resp = requests.get(url)
 
-    response = flask.make_response(resp.content, resp.status_code)
-    response.headers['Content-Type'] = "application/json"
-    return response
+    if store_id and resp.status_code == 200:
+        logging.debug("filter message store id:%s", store_id)
+        r = json.loads(resp.content)
+        msgs = r['data']
+        f = lambda m:m['command'] == MSG_CUSTOMER or m['command'] == MSG_CUSTOMER_SUPPORT and m['store_id'] == store_id
+        data = [m for m in msgs if f(m)]
+        return flask.make_response(json.dumps({"data":data}), 200)
+    else:
+        response = flask.make_response(resp.content, resp.status_code)
+        return response
+
