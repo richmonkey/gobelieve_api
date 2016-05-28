@@ -13,6 +13,7 @@ sys.setdefaultencoding("utf-8")
 import os
 import random
 import redis
+from microsofttranslator import Translator
 
 from views import image
 from views import audio
@@ -21,7 +22,7 @@ from views import group
 from views import user
 from views import notification
 from views import application
-
+from views import translator
 import config
 from views import authorization
 from libs.response_meta import ResponseMeta
@@ -37,6 +38,8 @@ FS.PORT = config.FS_PORT
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 
+micro_translator = Translator(config.MICROSOFT_CLIENTID, config.MICROSOFT_CLIENT_SECRET)
+
 authorization.rds = rds
 group.rds = rds
 user.rds = rds
@@ -47,6 +50,7 @@ LOGGER = logging.getLogger('')
 
 def before_request():
     LOGGER.debug("before request")
+    g.translator = micro_translator
     cnf = config.MYSQL
     imcnf = config.MYSQL_IM
     db = getattr(g, '_db', None)    
@@ -117,6 +121,7 @@ def init_app(app):
     app.register_blueprint(user.app)
     app.register_blueprint(notification.app)
     app.register_blueprint(application.app)
+    app.register_blueprint(translator.app)
 
 random.seed()
 
