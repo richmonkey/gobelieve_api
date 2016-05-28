@@ -136,7 +136,7 @@ def get_history_message():
         logging.debug("filter message store id:%s", store_id)
         r = json.loads(resp.content)
         msgs = r['data']
-        f = lambda m:m['command'] == MSG_CUSTOMER or m['command'] == MSG_CUSTOMER_SUPPORT and m['store_id'] == store_id
+        f = lambda m:(m['command'] == MSG_CUSTOMER or m['command'] == MSG_CUSTOMER_SUPPORT) and m['store_id'] == store_id
         data = [m for m in msgs if f(m)]
         return flask.make_response(json.dumps({"data":data}), 200)
     else:
