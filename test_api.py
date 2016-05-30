@@ -247,6 +247,17 @@ def TestRoomMessage():
     r = requests.post(url, data=json.dumps(data), headers=headers)
     assert(r.status_code == 200)
     print "send room message success"
+
+def TestTranslator():
+    url = URL + "/translate"
+    headers = {}
+    headers["Authorization"] = "Bearer " + access_token
+
+    params = {"text":"我饿了", "to":"en"}
+    r = requests.get(url, params=params, headers = headers)
+    assert(r.status_code == 200)
+    print r.content
+     
     
 TestImage()
 TestAudio()
@@ -254,3 +265,4 @@ TestGroup()
 TestDeviceToken()
 TestCustomerService()
 TestRoomMessage()
+TestTranslator()
