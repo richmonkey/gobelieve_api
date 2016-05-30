@@ -12,7 +12,7 @@ MYSQL_PORT = 3306
 MYSQL_AUTOCOMMIT = True
 MYSQL_CHARSET = 'utf8'
 
-MYSQL_USER = "lace_new"
+MYSQL_USER = "gobelieve"
 MYSQL_PASSWD = "123456"
 
 
