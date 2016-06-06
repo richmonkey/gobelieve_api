@@ -29,6 +29,9 @@ def traslate_message():
     if not text or not lan:
         raise ResponseMeta(400, "invalid param")
 
+    if lan in ('zh-Hans-CN','zh-Hans-HK','zh-Hans-MO','zh-Hans-SG','zh-Hans-TW'):
+        lan = 'zh-Hans'
+
     translator = g.translator
     translation = translator.translate(text, lan)
     obj = {"translation":translation}
