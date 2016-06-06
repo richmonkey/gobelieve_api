@@ -20,7 +20,6 @@ from views import message
 from views import group
 from views import user
 from views import notification
-from views import application
 
 import config
 from views import authorization
@@ -41,7 +40,6 @@ authorization.rds = rds
 group.rds = rds
 user.rds = rds
 notification.rds = rds
-application.rds = rds
 
 LOGGER = logging.getLogger('')
 
@@ -116,7 +114,6 @@ def init_app(app):
     app.register_blueprint(group.app)
     app.register_blueprint(user.app)
     app.register_blueprint(notification.app)
-    app.register_blueprint(application.app)
 
 random.seed()
 
