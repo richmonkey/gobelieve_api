@@ -18,6 +18,14 @@ def traslate_message():
     text = request.args.get('text')
     lan = request.args.get('to')
 
+
+    header = request.headers.get('Accept-Language', '')
+    locales = [locale.split(';')[0] for locale in header.split(',')]
+    accept_lan = locales[0]
+
+    if not lan:
+        lan = accept_lan
+
     if not text or not lan:
         raise ResponseMeta(400, "invalid param")
 
