@@ -1,5 +1,5 @@
 #!/bin/bash
-project="im_api"
+project="gobelieve_api"
 
 app_dir="/data/wwwroot/${project}"
 log_dir="/data/logs/${project}"
