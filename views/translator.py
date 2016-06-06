@@ -32,6 +32,9 @@ def traslate_message():
     if lan in ('zh-Hans-CN','zh-Hans-HK','zh-Hans-MO','zh-Hans-SG','zh-Hans-TW'):
         lan = 'zh-Hans'
 
+    if lan.startswith('en-'):
+        lan = 'en'
+
     translator = g.translator
     translation = translator.translate(text, lan)
     obj = {"translation":translation}
