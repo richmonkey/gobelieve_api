@@ -46,7 +46,7 @@ class User(object):
     def save_user_device_token(rds, appid, uid, device_token, 
                                ng_device_token, xg_device_token,
                                xm_device_token, hw_device_token,
-                               gcm_device_token):
+                               gcm_device_token, jp_device_token):
         now = int(time.time())
         key = "users_%d_%d"%(appid, uid)
 
@@ -92,6 +92,13 @@ class User(object):
             }
             rds.hmset(key, obj)
             
+        if jp_device_token:
+            obj = {
+                "jp_device_token":jp_device_token,
+                "jp_timestamp":now
+            }
+            rds.hmset(key, obj)
+
         return True
 
 
@@ -100,44 +107,50 @@ class User(object):
     def reset_user_device_token(rds, appid, uid, device_token, 
                                 ng_device_token, xg_device_token, 
                                 xm_device_token, hw_device_token, 
-                                gcm_device_token):
+                                gcm_device_token, jp_device_token):
         key = "users_%d_%d"%(appid, uid)
         if device_token:
             t = rds.hget(key, "apns_device_token")
-            if device_token == t:
+            if device_token != t:
                 return False
             rds.hdel(key, "apns_device_token")
 
         if ng_device_token:
             t = rds.hget(key, "ng_device_token")
-            if ng_device_token == t:
+            if ng_device_token != t:
                 return False
             rds.hdel(key, "ng_device_token")
             
         if xg_device_token:
             t = rds.hget(key, "xg_device_token")
-            if xg_device_token == t:
+            if xg_device_token != t:
                 return False
             rds.hdel(key, "xg_device_token")
 
         if xm_device_token:
             t = rds.hget(key, "xm_device_token")
-            if xm_device_token == t:
+            if xm_device_token != t:
                 return False
             rds.hdel(key, "xm_device_token")
 
         if hw_device_token:
             t = rds.hget(key, "hw_device_token")
-            if hw_device_token == t:
+            if hw_device_token != t:
                 return False
             rds.hdel(key, "hw_device_token")
 
         if gcm_device_token:
             t = rds.hget(key, "gcm_device_token")
-            if gcm_device_token == t:
+            if gcm_device_token != t:
                 return False
             rds.hdel(key, "gcm_device_token")
         
+        if jp_device_token:
+            t = rds.hget(key, "jp_device_token")
+            if jp_device_token != t:
+                return False
+            rds.hdel(key, "jp_device_token")
+
         return True
 
     @staticmethod

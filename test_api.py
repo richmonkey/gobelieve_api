@@ -184,9 +184,9 @@ def TestDeviceToken():
         #"xg_device_token":"adb238518d682b2e49cba26c207f04a712c6da46",
         #"xm_device_token":"d//igwEhgBGCI2TG6lWqlOlzU8pu8+C4t+wQ4zMxFYhLO0pHWInlKmKMyW9I3gWgby1Z1vq59TkIQQYeaS43gEzCfwuNRp+OkuHM3JCDA5U=",
         #"hw_device_token":"08650300127619392000000630000001",
-        "apns_device_token":"177bbe6da89125b84bfad60ff3d729005792fad4ebbbf5729a8cecc79365a218",
+        #"apns_device_token":"177bbe6da89125b84bfad60ff3d729005792fad4ebbbf5729a8cecc79365a218",
         #"gcm_device_token":"fNMMmCwoba0:APA91bGqpKqwMvbxNlAcGj6wILQoCAY59wx3huFculEkUyElnidJvuEgwVVFuD3PKBUoLIop8ivJlXlkJNPYfFAnabHPAn8_o4oeX1b8eIaOQLmVOkXY-sUw-QAY4MF9PG4RL3TDq7e6",
-
+        "jp_device_token":"111111",
     }
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
