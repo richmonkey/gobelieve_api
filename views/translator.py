@@ -34,9 +34,35 @@ def traslate_message():
 
     if lan.startswith('en-'):
         lan = 'en'
+    
+    USE_MICROSOFT = False
+    if USE_MICROSOFT:
+        translator = g.translator
+        translation = translator.translate(text, lan)
+        obj = {"translation":translation}
+        return make_response(200, obj)
+    else:
+        session = requesocks.session()
+        session.proxies = {
+            'http': config.SOCKS5_PROXY,
+            'https': config.SOCKS5_PROXY,
+        }
 
-    translator = g.translator
-    translation = translator.translate(text, lan)
-    obj = {"translation":translation}
-    return make_response(200, obj)
+        params = {"key":config.GOOGLE_API_KEY,
+                  "q":text,
+                  "target":lan}
+
+        url = "https://www.googleapis.com/language/translate/v2"
+        resp = session.get(url, params=params)
+
+        if resp.status_code != 200:
+            raise ResponseMeta(400, "translate error")
+
+        r = json.loads(resp.content)
+        obj = {"translation": r['data']['translations']['translatedText']}
+        return make_response(200, obj)
+
+        
+
+
 
