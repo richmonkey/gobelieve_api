@@ -46,9 +46,14 @@ class User(object):
     def save_user_device_token(rds, appid, uid, device_token, 
                                ng_device_token, xg_device_token,
                                xm_device_token, hw_device_token,
-                               gcm_device_token, jp_device_token):
+                               gcm_device_token, jp_device_token,
+                               bundle_id=''):
         now = int(time.time())
-        key = "users_%d_%d"%(appid, uid)
+
+        if bundle_id:
+            key = "users_%d_%d_%s"%(appid, uid, bundle_id)
+        else:
+            key = "users_%d_%d"%(appid, uid)
 
         if device_token:
             obj = {
@@ -107,8 +112,13 @@ class User(object):
     def reset_user_device_token(rds, appid, uid, device_token, 
                                 ng_device_token, xg_device_token, 
                                 xm_device_token, hw_device_token, 
-                                gcm_device_token, jp_device_token):
-        key = "users_%d_%d"%(appid, uid)
+                                gcm_device_token, jp_device_token,
+                                bundle_id=''):
+        if bundle_id:
+            key = "users_%d_%d_%s"%(appid, uid, bundle_id)
+        else:
+            key = "users_%d_%d"%(appid, uid)
+
         if device_token:
             t = rds.hget(key, "apns_device_token")
             if device_token != t:

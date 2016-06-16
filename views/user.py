@@ -88,6 +88,8 @@ def bind_device_token():
     gcm_device_token = obj["gcm_device_token"] if obj.has_key("gcm_device_token") else ""
     jp_device_token = obj["jp_device_token"] if obj.has_key("jp_device_token") else ""
 
+    bundle_id = obj['bundle_id'] if obj.has_key('bundle_id') else ''
+
     if not device_token and not ng_device_token and not xg_device_token \
        and not xm_device_token and not hw_device_token \
        and not gcm_device_token and not jp_device_token:
@@ -97,7 +99,8 @@ def bind_device_token():
     User.save_user_device_token(rds, appid, uid, device_token, 
                                 ng_device_token, xg_device_token,
                                 xm_device_token, hw_device_token,
-                                gcm_device_token, jp_device_token)
+                                gcm_device_token, jp_device_token, 
+                                bundle_id)
     return ""
 
 @app.route("/device/unbind", methods=["POST"])
@@ -113,6 +116,7 @@ def unbind_device_token():
     hw_device_token = obj["hw_device_token"] if obj.has_key("hw_device_token") else ""
     gcm_device_token = obj["gcm_device_token"] if obj.has_key("gcm_device_token") else ""
     jp_device_token = obj["jp_device_token"] if obj.has_key("jp_device_token") else ""
+    bundle_id = obj['bundle_id'] if obj.has_key('bundle_id') else ''
 
     if not device_token and not ng_device_token and not xg_device_token \
        and not xm_device_token and not hw_device_token \
@@ -122,7 +126,8 @@ def unbind_device_token():
     User.reset_user_device_token(rds, appid, uid, device_token, 
                                  ng_device_token, xg_device_token, 
                                  xm_device_token, hw_device_token,
-                                 gcm_device_token, jp_device_token)
+                                 gcm_device_token, jp_device_token,
+                                 bundle_id)
 
     return ""
 
