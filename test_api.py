@@ -25,7 +25,7 @@ URL = "http://dev.api.gobelieve.io"
 
 def login(uid):
     url = URL + "/auth/grant"
-    obj = {"uid":uid, "user_name":str(uid)}
+    obj = {"uid":uid, "user_name":str(uid), 'bundle_id':"io.gobelieve.demo"}
     secret = md5.new(APP_SECRET).digest().encode("hex")
     basic = base64.b64encode(str(APP_ID) + ":" + secret)
     headers = {'Content-Type': 'application/json; charset=UTF-8',
