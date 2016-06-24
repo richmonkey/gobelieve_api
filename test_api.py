@@ -248,6 +248,27 @@ def TestRoomMessage():
     r = requests.post(url, data=json.dumps(data), headers=headers)
     assert(r.status_code == 200)
     print "send room message success"
+
+def TestRealtimeMessage():
+    url = URL + "/messages/realtime"
+
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    content = json.dumps({"text":"hello"})
+    sender = 2
+    receiver = 1
+    data = {
+        "sender":sender,
+        "receiver":receiver,
+        "content":content
+    }
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "send realtime message success"
+
     
 TestImage()
 TestAudio()
@@ -255,3 +276,4 @@ TestGroup()
 TestDeviceToken()
 TestCustomerService()
 TestRoomMessage()
+TestRealtimeMessage()
