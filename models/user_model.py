@@ -4,10 +4,14 @@ import time
 
 class User(object):
     @staticmethod
-    def get_user_access_token(rds, appid, uid):
+    def get_user_access_token(rds, appid, uid, bundle_id=''):
         key = "users_%d_%d"%(appid, uid)
-        token = rds.hget(key, "access_token")
-        return token
+        if bundle_id:
+            token = rds.hget(key, "access_token")
+            return token
+        else:
+            token = rds.hget(key, "%s_access_token"%bundle_id)
+            return token
 
     @staticmethod
     def load_user_access_token(rds, token):
@@ -19,23 +23,30 @@ class User(object):
         return uid, appid, name
 
     @staticmethod
-    def save_user_access_token(rds, appid, uid, name, token):
+    def save_user_access_token(rds, appid, uid, name, token, bundle_id=''):
         pipe = rds.pipeline()
 
         key = "access_token_%s"%token
         obj = {
             "user_id":uid,
             "user_name":name,
-            "app_id":appid
+            "app_id":appid,
+            "bundle_id":bundle_id
         }
         
         pipe.hmset(key, obj)
 
         key = "users_%d_%d"%(appid, uid)
-        obj = {
-            "access_token":token,
-            "name":name
-        }
+        if bundle_id:
+            obj = {
+                "%s_access_token"%bundle_id:token,
+                "name":name
+            }
+        else:
+            obj = {
+                "access_token":token,
+                "name":name
+            }
 
         pipe.hmset(key, obj)
         pipe.execute()

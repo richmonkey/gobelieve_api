@@ -55,12 +55,14 @@ def grant_auth_token():
     obj = json.loads(request.data)
     uid = obj["uid"]
     name = obj["user_name"] if obj.has_key("user_name") else ""
-    token = User.get_user_access_token(rds, appid, uid)
+    bundle_id = obj.get('bundle_id', '')
+
+    token = User.get_user_access_token(rds, appid, uid, bundle_id)
     if not token:
         token = create_access_token()
         User.add_user_count(rds, appid, uid)
-
-    User.save_user_access_token(rds, appid, uid, name, token)
+    
+    User.save_user_access_token(rds, appid, uid, name, token, bundle_id)
 
     if obj.has_key("platform_id") and obj.has_key("device_id"):
         platform_id = obj['platform_id']
