@@ -55,6 +55,8 @@ def traslate_message():
 
     if lan.startswith('en-'):
         lan = 'en'
+    if lan.startswith('tr-'):
+        lan = 'tr'
     
     USE_MICROSOFT = False
     if USE_MICROSOFT:
