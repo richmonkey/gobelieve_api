@@ -159,8 +159,14 @@ class User(object):
         rds.hset(key, "name", name)
 
     @staticmethod
+    def set_user_forbidden(rds, appid, uid, fb):
+        key = "users_%d_%d"%(appid, uid)
+        rds.hset(key, "forbidden", fb)
+
+    @staticmethod
     def add_user_count(rds, appid, uid):
-        pass
+        key = "statistics_users_%d"%appid
+        rds.pfadd(key, uid)
 
 class Staff(object):
     @staticmethod

@@ -248,9 +248,32 @@ def TestRoomMessage():
     assert(r.status_code == 200)
     print "send room message success"
     
+def TestForbidden():
+    uid = 1000
+    url = URL + "/users/%s"%uid
+
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    data = {"forbidden":True}
+
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "set forbidden:1 success"
+
+    data = {"forbidden":False}
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "set forbidden:0 success"
+
+
+
 TestImage()
 TestAudio()
 TestGroup()
 TestDeviceToken()
 TestCustomerService()
 TestRoomMessage()
+TestForbidden()

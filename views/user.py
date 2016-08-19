@@ -31,6 +31,8 @@ def random_token_generator(length=30, chars=UNICODE_ASCII_CHARACTER_SET):
 def create_access_token():
     return random_token_generator()
 
+def publish_message(rds, channel, msg):
+    rds.publish(channel, msg)
 
 im_url=config.IM_RPC_URL
 
@@ -132,8 +134,14 @@ def set_user_name(uid):
     appid = request.appid
     obj = json.loads(request.data)
     name = obj["name"] if obj.has_key("name") else ""
-    if not name:
+    if name:
+        User.set_user_name(rds, appid, uid, name)
+    elif obj.has_key('forbidden'):
+        fb = 1 if obj['forbidden'] else 0
+        User.set_user_forbidden(rds, appid, uid, fb)
+        content = "%d,%d,%d"%(appid, uid, fb)
+        publish_message(rds, "speak_forbidden", content)
+    else:
         raise ResponseMeta(400, "invalid param")
 
-    User.set_user_name(rds, appid, uid, name)
     return ""
