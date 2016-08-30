@@ -16,6 +16,7 @@ from models.user_model import User
 
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
+from rpc import send_group_notification
 
 app = Blueprint('group', __name__)
 
@@ -25,26 +26,6 @@ rds = None
 
 def publish_message(channel, msg):
     rds.publish(channel, msg)
-
-def send_group_notification(appid, gid, op, members):
-    url = im_url + "/post_group_notification"
-
-    obj = {
-        "appid": appid,
-        "group_id": gid,
-        "notification":json.dumps(op)
-    }
-    if members:
-        obj["members"] = members
-
-    headers = {"Content-Type":"application/json"}
-
-    data = json.dumps(obj)
-    resp = requests.post(url, data=data, headers=headers)
-    if resp.status_code != 200:
-        logging.warning("send group notification error:%s", resp.content)
-    else:
-        logging.debug("send group notification success:%s", data)
 
         
 @app.route("/groups", methods=["POST"])
@@ -279,4 +260,5 @@ def group_member_setting(gid, memberid):
     else:
         raise ResponseMeta(400, "no action")
 
-    return ""
+    resp = {"success":True}
+    return make_response(200, resp)

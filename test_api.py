@@ -95,54 +95,6 @@ def TestAudio():
     assert(r.status_code == 200)
     print "mp3 len:", len(r.content)
 
-
-def TestGroup():
-    secret = md5.new(APP_SECRET).digest().encode("hex")
-    basic = base64.b64encode(str(APP_ID) + ":" + secret)
-    headers = {'Content-Type': 'application/json; charset=UTF-8',
-               'Authorization': 'Basic ' + basic}
-
-    url = URL + "/groups"
-
-    group = {"master":13635273142,"members":[13635273142], "name":"test", "super":True}
-    r = requests.post(url, data=json.dumps(group), headers = headers)
-    assert(r.status_code == 200)
-    obj = json.loads(r.content)
-    group_id = obj["data"]["group_id"]
-
-
-    url = URL + "/groups/%s"%str(group_id)
-    r = requests.patch(url, data=json.dumps({"name":"test_new"}), headers = headers)
-    assert(r.status_code == 200)
-
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.post(url, data=json.dumps({"uid":13635273143}), headers = headers)
-    assert(r.status_code == 200)
-
-
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.post(url, data=json.dumps({"uid":13635273143}), headers = headers)
-    print r.content
-    assert(r.status_code == 200)
-
-
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.post(url, data=json.dumps([13635273144,13635273145]), headers = headers)
-    assert(r.status_code == 200)
-
-
-    url = URL + "/groups/%s/members/13635273143"%str(group_id)
-    r = requests.delete(url, headers = headers)
-
-    assert(r.status_code == 200)
-
-    url = URL + "/groups/%s"%str(group_id)
-    r = requests.delete(url, headers = headers)
-
-
-    print "test group completed"
-
-
 def send_message(sender, receiver, content):
     url = URL + "/messages/peers"
 
@@ -199,34 +151,6 @@ def TestDeviceToken():
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
 
-def TestCustomerService():
-    secret = md5.new(APP_SECRET).digest().encode("hex")
-    basic = base64.b64encode(str(APP_ID) + ":" + secret)
-    headers = {'Content-Type': 'application/json; charset=UTF-8',
-               'Authorization': 'Basic ' + basic}
-
-    url = URL + "/applications/%s"%APP_ID
-
-    obj = {"customer_service":True}
-    r = requests.patch(url, data=json.dumps(obj), headers=headers)
-    assert(r.status_code == 200)
-    print "enable customer service success"
-
-    obj = {"customer_service_mode":1}
-    r = requests.patch(url, data=json.dumps(obj), headers=headers)
-    assert(r.status_code == 200)
-    print "set customer service mode:3 success"
-
-    url = URL + "/staffs"
-    obj = {"staff_uid":100, "staff_name":"客服100"}
-    r = requests.post(url, data=json.dumps(obj), headers=headers)
-    assert(r.status_code == 200)
-    print "add customer service staff success"
-
-    url = URL + "/staffs/%s"%100
-    r = requests.delete(url, headers=headers)
-    assert(r.status_code == 200)
-    print "remove customer service staff success"
     
 def TestRoomMessage():
     url = URL + "/messages/rooms"
@@ -248,6 +172,24 @@ def TestRoomMessage():
     assert(r.status_code == 200)
     print "send room message success"
     
+def TestGroupNotification():
+    url = URL + "/messages/groups/notifications"
+
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    notification = json.dumps({"text":"hello"})
+    data = {
+        "group_id":812,
+        "content":notification
+    }
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "send group notification success"
+
+
 def TestForbidden():
     uid = 1000
     url = URL + "/users/%s"%uid
@@ -272,8 +214,7 @@ def TestForbidden():
 
 TestImage()
 TestAudio()
-TestGroup()
 TestDeviceToken()
-TestCustomerService()
 TestRoomMessage()
 TestForbidden()
+TestGroupNotification()

@@ -10,27 +10,16 @@ from libs.crossdomain import crossdomain
 from authorization import require_application_auth
 from authorization import require_auth
 
+from libs.util import make_response
+
+from rpc import post_message
+from rpc import send_group_notification_s
+
+
 app = Blueprint('message', __name__)
 
 im_url=config.IM_RPC_URL
 
-def post_message(appid, sender, receiver, cls, content):
-    params = {
-        "appid":appid,
-        "class":cls,
-        "sender":sender
-    }
-
-    req_obj = {
-        "receiver":receiver,
-        "content":content,
-    }
-
-    url = im_url + "/post_im_message?" + urlencode(params)
-    logging.debug("url:%s", url)
-    headers = {"Content-Type":"application/json"}
-    res = requests.post(url, data=json.dumps(req_obj), headers=headers)
-    return res
     
 #发送群组消息
 @app.route('/messages/groups', methods=['POST'])
@@ -108,6 +97,26 @@ def post_room_message():
         return flask.make_response("", 200)
     else:
         return flask.make_response(resp.content, resp.status_code)
+
+
+
+#发送群通知消息
+@app.route('/messages/groups/notifications', methods=['POST'])
+@require_application_auth
+def post_group_notification():
+    appid = request.appid
+
+    obj = json.loads(request.data)
+
+    group_id = obj["group_id"]
+    content = obj["content"]
+
+    resp = send_group_notification_s(appid, group_id, content, [])
+    if resp.status_code == 200:
+        return flask.make_response("", 200)
+    else:
+        return flask.make_response(resp.content, resp.status_code)
+
 
 
 MSG_CUSTOMER = 24;
