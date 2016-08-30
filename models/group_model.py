@@ -49,9 +49,31 @@ class Group(object):
         logging.debug("delete group member rows:%s", r.rowcount)
 
     @staticmethod
+    def get_group_members(db, group_id):
+        sql = "SELECT uid FROM group_member WHERE group_id=%s"
+        r = db.execute(sql, group_id)
+        return list(r.fetchall())
+        
+    @staticmethod
     def get_group_master(db, group_id):
         sql = "SELECT master FROM `group` WHERE id=%s"
         cursor = db.execute(sql, group_id)
         r = cursor.fetchone()
         master = r["master"]
         return master
+
+    @staticmethod
+    def get_group(db, group_id):
+        sql = "SELECT id, appid, master, super, name FROM `group` WHERE id=%s"
+        cursor = db.execute(sql, group_id)
+        r = cursor.fetchone()
+        return r
+        
+
+    #获取用户所在的所有群
+    @staticmethod
+    def get_groups(db, appid, uid):
+        sql = "SELECT g.id, g.appid, g.master, g.super, g.name FROM `group_member`, `group` as g WHERE group_member.uid=%s AND group_member.group_id=g.id AND g.appid=%s"
+
+        cursor = db.execute(sql, (uid, appid))
+        return list(cursor.fetchall())

@@ -45,6 +45,8 @@ LOGGER = logging.getLogger('')
 
 def before_request():
     LOGGER.debug("before request")
+    g.rds= rds
+
     cnf = config.MYSQL
     imcnf = config.MYSQL_IM
     db = getattr(g, '_db', None)    

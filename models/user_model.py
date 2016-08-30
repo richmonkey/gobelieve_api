@@ -159,22 +159,32 @@ class User(object):
         rds.hset(key, "name", name)
 
     @staticmethod
+    def get_user_name(rds, appid, uid):
+        key = "users_%d_%d"%(appid, uid)
+        return rds.hget(key, "name")
+
+    #用户禁言设置
+    @staticmethod
     def set_user_forbidden(rds, appid, uid, fb):
         key = "users_%d_%d"%(appid, uid)
         rds.hset(key, "forbidden", fb)
+
+    #群组免打扰设置
+    @staticmethod
+    def get_user_notification_quiet(rds, appid, uid, group_id):
+        key = "users_%s_%s"%(appid, uid)
+        quiet = rds.hget(key, "group_%d"%group_id)
+        q = int(quiet) if quiet else 0
+        return q
+
+    @staticmethod
+    def set_user_notification_quiet(rds, appid, uid, group_id, quiet):
+        key = "users_%s_%s"%(appid, uid)
+        q = 1 if quiet else 0
+        rds.hset(key, "group_%d"%group_id, q)
 
     @staticmethod
     def add_user_count(rds, appid, uid):
         key = "statistics_users_%d"%appid
         rds.pfadd(key, uid)
 
-class Staff(object):
-    @staticmethod
-    def add_online(rds, appid, uid):
-        key = "customer_service_online_%d"%appid
-        rds.sadd(key, uid)
-
-    @staticmethod
-    def remove_online(rds, appid, uid):
-        key = "customer_service_online_%d"%appid
-        rds.srem(key, uid)

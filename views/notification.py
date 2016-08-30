@@ -9,16 +9,11 @@ import logging
 import json
 import time
 from authorization import require_auth
-
+from models.user_model import User
 
 app = Blueprint('notification', __name__)
         
 rds = None
-   
-def set_notification_quiet(appid, uid, gid, quiet):
-    key = "users_%d_%d"%(appid, uid)
-    field = "group_%d"%gid
-    rds.hset(key, field, quiet)
     
 @app.route("/notification/groups/<int:gid>", methods=["POST"])
 @require_auth
@@ -28,6 +23,5 @@ def enable_group_notification(gid):
     
     obj = json.loads(request.data)
     quiet = obj["quiet"]
-    
-    set_notification_quiet(appid, uid, gid, quiet)
+    User.set_group_notification_quiet(rds, appid, uid, quiet)
     return ""
