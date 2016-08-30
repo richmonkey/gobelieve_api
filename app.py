@@ -34,7 +34,7 @@ app.debug = config.DEBUG
 FS.HOST = config.FS_HOST
 FS.PORT = config.FS_PORT
 
-rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
+rds = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, password=config.REDIS_PASSWORD, db=config.REDIS_DB)
 
 authorization.rds = rds
 group.rds = rds
