@@ -41,8 +41,13 @@ def create_group():
     if hasattr(request, 'uid') and request.uid != master:
         raise ResponseMeta(400, "master must be self")
         
-        
-    gid = Group.create_group(g._imdb, appid, master, name, is_super, members)
+    gid = obj['group_id'] if obj.has_key('group_id') else 0
+    if gid > 0:
+        gid = Group.create_group_ext(g._imdb, gid, appid, master, name, 
+                                     is_super, members)
+    else:
+        gid = Group.create_group(g._imdb, appid, master, name, 
+                                 is_super, members)
     
     s = 1 if is_super else 0
     content = "%d,%d,%d"%(gid, appid, s)

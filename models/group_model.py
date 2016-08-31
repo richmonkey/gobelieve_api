@@ -2,6 +2,23 @@
 import logging
 
 class Group(object):
+    #外部指定groupid
+    @staticmethod
+    def create_group_ext(db, group_id, appid, master, name, is_super, members):
+        db.begin()
+        sql = "INSERT INTO `group`(id, appid, master, name, super) VALUES(%s, %s, %s, %s, %s)"
+
+        s = 1 if is_super else 0
+        r = db.execute(sql, (group_id, appid, master, name, s))
+
+        for m in members:
+            sql = "INSERT INTO group_member(group_id, uid) VALUES(%s, %s)"
+            db.execute(sql, (group_id, m))
+
+        db.commit()
+        return group_id
+
+    #使用自增的groupid
     @staticmethod
     def create_group(db, appid, master, name, is_super, members):
         db.begin()
