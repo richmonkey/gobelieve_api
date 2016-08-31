@@ -41,7 +41,10 @@ def create_group():
     if hasattr(request, 'uid') and request.uid != master:
         raise ResponseMeta(400, "master must be self")
         
-    gid = obj['group_id'] if obj.has_key('group_id') else 0
+    gid = 0
+    if config.EXTERNAL_GROUP_ID:
+        gid = obj['group_id'] if obj.has_key('group_id') else 0
+
     if gid > 0:
         gid = Group.create_group_ext(g._imdb, gid, appid, master, name, 
                                      is_super, members)

@@ -34,3 +34,7 @@ FS_PORT=8083
 IM_RPC_URL = "http://192.168.33.1:6666"
 
 SOCKS5_PROXY = 'socks5://127.0.0.1:7778'
+
+
+#支持外部群组id
+EXTERNAL_GROUP_ID=True
