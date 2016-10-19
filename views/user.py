@@ -9,6 +9,7 @@ import logging
 import json
 import time
 import random
+from libs.crossdomain import crossdomain
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
 from authorization import require_application_or_person_auth
@@ -38,13 +39,14 @@ def publish_message(rds, channel, msg):
 im_url=config.IM_RPC_URL
 
 @app.route("/auth/customer", methods=["POST"])
+@crossdomain(origin='*', headers=['Authorization'])
 def customer_auth():
     rds = g.rds
     db = g._db
     obj = json.loads(request.data)
     appid = obj.get("appid", 0)
     uid = obj.get("uid", 0)
-    name = obj.get("use_name", "")
+    name = obj.get("user_name", "")
 
     if not appid or not uid:
         raise ResponseMeta(400, "invalid param")
