@@ -15,6 +15,7 @@ from authorization import require_application_or_person_auth
 from authorization import require_application_auth
 from authorization import require_auth
 from models.user_model import User
+from models.app import App
 
 app = Blueprint('user', __name__)
 
@@ -35,6 +36,42 @@ def publish_message(rds, channel, msg):
     rds.publish(channel, msg)
 
 im_url=config.IM_RPC_URL
+
+@app.route("/auth/customer", methods=["POST"])
+def customer_auth():
+    rds = g.rds
+    db = g._db
+    obj = json.loads(request.data)
+    appid = obj.get("appid", 0)
+    uid = obj.get("uid", 0)
+    name = obj.get("use_name", "")
+
+    if not appid or not uid:
+        raise ResponseMeta(400, "invalid param")
+
+    store_id = App.get_store_id(db, appid)
+    if not store_id:
+        raise ResponseMeta(400, "app do not support customer")
+
+    token = User.get_user_access_token(rds, appid, uid)
+    if not token:
+        token = create_access_token()
+        User.add_user_count(rds, appid, uid)
+
+    User.save_user_access_token(rds, appid, uid, name, token)
+
+    if obj.has_key("platform_id") and obj.has_key("device_id"):
+        platform_id = obj['platform_id']
+        device_id = obj['device_id']
+        s = init_message_queue(appid, uid, platform_id, device_id)
+        if s:
+            logging.error("init message queue success")
+        else:
+            logging.error("init message queue fail")
+        
+    data = {"data":{"token":token, "store_id":store_id}}
+    return make_response(200, data)
+
 
 def init_message_queue(appid, uid, platform_id, device_id):
     obj = {
@@ -137,6 +174,7 @@ def set_user_name(uid):
     if name:
         User.set_user_name(rds, appid, uid, name)
     elif obj.has_key('forbidden'):
+        #聊天室禁言
         fb = 1 if obj['forbidden'] else 0
         User.set_user_forbidden(rds, appid, uid, fb)
         content = "%d,%d,%d"%(appid, uid, fb)

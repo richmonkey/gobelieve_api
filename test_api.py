@@ -23,25 +23,6 @@ APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 URL = "http://dev.api.gobelieve.io"
 
 
-def login(uid):
-    url = URL + "/auth/grant"
-    obj = {"uid":uid, "user_name":str(uid)}
-    secret = md5.new(APP_SECRET).digest().encode("hex")
-    basic = base64.b64encode(str(APP_ID) + ":" + secret)
-    headers = {'Content-Type': 'application/json; charset=UTF-8',
-               'Authorization': 'Basic ' + basic}
-     
-    res = requests.post(url, data=json.dumps(obj), headers=headers)
-    if res.status_code != 200:
-        print res.status_code, res.content
-        return None
-    obj = json.loads(res.text)
-    return obj["data"]["token"]
-
-
-access_token = login(1000)
-print "token:", access_token
-
 def TestImage():
     url = URL + "/images"
     f = open("data/test.jpg", "rb")
@@ -210,7 +191,38 @@ def TestForbidden():
     assert(r.status_code == 200)
     print "set forbidden:0 success"
 
+def TestCustomerAuth():
+    appid = 1519
+    uid = 1000
+    url = URL + "/auth/customer"
 
+    data = {"appid":appid, "uid":uid, "user_name":"测试客服"}
+    headers = {'Content-Type': 'application/json; charset=UTF-8'}
+
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "customer auth:", r.content
+
+
+
+def login(uid):
+    url = URL + "/auth/grant"
+    obj = {"uid":uid, "user_name":str(uid)}
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+     
+    res = requests.post(url, data=json.dumps(obj), headers=headers)
+    if res.status_code != 200:
+        print res.status_code, res.content
+        return None
+    obj = json.loads(res.text)
+    return obj["data"]["token"]
+
+
+access_token = login(1000)
+print "token:", access_token    
 
 TestImage()
 TestAudio()
@@ -218,3 +230,4 @@ TestDeviceToken()
 TestRoomMessage()
 TestForbidden()
 TestGroupNotification()
+TestCustomerAuth()
