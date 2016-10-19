@@ -9,12 +9,12 @@ import json
 from libs.crossdomain import crossdomain
 from authorization import require_application_auth
 from authorization import require_auth
-
+from libs.response_meta import ResponseMeta
 from libs.util import make_response
 
 from rpc import post_message
 from rpc import send_group_notification_s
-
+from rpc import get_offline_count
 
 app = Blueprint('message', __name__)
 
@@ -53,7 +53,7 @@ def post_peer_messages():
         return flask.make_response(resp.content, resp.status_code)
 
 #发送系统消息
-@app.route('/messages/systems', methods=['POST', 'GET'])
+@app.route('/messages/systems', methods=['POST'])
 @require_application_auth
 def post_system_message():
     appid = request.appid
@@ -151,4 +151,29 @@ def get_history_message():
     else:
         response = flask.make_response(resp.content, resp.status_code)
         return response
+
+
+@app.route('/messages/offline', methods=['GET'])
+@require_application_auth
+def get_offline_message():
+    appid = request.appid
+    uid = int(request.args.get("uid", 0))
+    print request.args
+    if not uid:
+        raise ResponseMeta(400, "invalid uid")
+
+    platform_id = int(request.args.get("platform_id", 0))
+    device_id = request.args.get("device_id", "")
+
+    params = {
+        "appid": appid,
+        "uid": uid,
+        "device_id":device_id,
+        "platform_id":platform_id,
+    }
+
+    #获取离线消息数目
+    count = get_offline_count(appid, uid, platform_id, device_id)
+    data = {"count":count}
+    return make_response(200, data)
 

@@ -51,3 +51,37 @@ def send_group_notification_s(appid, gid, notification, members):
 
 def send_group_notification(appid, gid, op, members):
     return send_group_notification_s(appid, gid, json.dumps(op), members)
+
+
+def init_message_queue(appid, uid, platform_id, device_id):
+    obj = {
+        "appid":appid,
+        "uid":uid,
+        "device_id":device_id,
+        "platform_id":platform_id
+    }
+
+    url = im_url + "/init_message_queue"
+    logging.debug("url:%s", url)
+    headers = {"Content-Type":"application/json"}
+    res = requests.post(url, data=json.dumps(obj), headers=headers)
+    return res.status_code == 200
+
+def get_offline_count(appid, uid, platform_id, device_id):
+    obj = {
+        "appid":appid,
+        "uid":uid,
+        "device_id":device_id,
+        "platform_id":platform_id
+    }
+
+    url = im_url + "/get_offline_count"
+    logging.debug("url:%s", url)
+    headers = {"Content-Type":"application/json"}
+    res = requests.get(url, params=obj, headers=headers)
+    if res.status_code != 200:
+        return 0
+    else:
+        r = json.loads(res.content)
+        return r["data"]["count"]
+    

@@ -204,6 +204,21 @@ def TestCustomerAuth():
     print "customer auth:", r.content
 
 
+def TestGetOfflineCount():
+    uid = 1
+    url = URL + "/messages/offline"
+
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+
+    params = {"uid":uid, "platform_id":2, "device_id":"121312121432498"}
+    r = requests.get(url, params=params, headers=headers)
+    print "get offline count:", r.content
+    assert(r.status_code == 200)
+
 
 def login(uid):
     url = URL + "/auth/grant"
@@ -231,3 +246,4 @@ TestRoomMessage()
 TestForbidden()
 TestGroupNotification()
 TestCustomerAuth()
+TestGetOfflineCount()
