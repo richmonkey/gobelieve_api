@@ -85,3 +85,16 @@ def get_offline_count(appid, uid, platform_id, device_id):
         r = json.loads(res.content)
         return r["data"]["count"]
     
+def dequeue_message(appid, uid, msgid):
+    obj = {
+        "appid":appid,
+        "uid":uid,
+        "msgid":msgid
+    }
+
+    url = im_url + "/dequeue_message"
+    headers = {"Content-Type":"application/json"}
+    res = requests.post(url, data=json.dumps(obj), headers=headers)
+    print res.content
+    return res.status_code == 200
+    

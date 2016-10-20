@@ -15,6 +15,7 @@ from libs.util import make_response
 from rpc import post_message
 from rpc import send_group_notification_s
 from rpc import get_offline_count
+import rpc
 
 app = Blueprint('message', __name__)
 
@@ -152,6 +153,21 @@ def get_history_message():
         response = flask.make_response(resp.content, resp.status_code)
         return response
 
+@app.route('/messages/dequeue', methods=['POST'])
+@crossdomain(origin='*', headers=['Authorization'])
+@require_auth
+def dequeue_message():
+    appid = request.appid
+    uid = request.uid
+
+    obj = json.loads(request.data)
+    msgid = obj["msgid"] if obj.has_key("msgid") else 0
+    if not msgid:
+        raise ResponseMeta(400, "invalid msgid")
+
+    r = rpc.dequeue_message(appid, uid, msgid)
+    logging.debug("dequue message:%s", r)
+    return make_response(200, {"success":True})
 
 @app.route('/messages/offline', methods=['GET'])
 @require_application_auth

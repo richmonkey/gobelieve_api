@@ -204,6 +204,10 @@ def TestCustomerAuth():
     print "customer auth:", r.content
 
 
+
+
+
+
 def TestGetOfflineCount():
     uid = 1
     url = URL + "/messages/offline"
@@ -214,10 +218,38 @@ def TestGetOfflineCount():
                'Authorization': 'Basic ' + basic}
 
 
-    params = {"uid":uid, "platform_id":2, "device_id":"121312121432498"}
+    params = {"uid":uid}
     r = requests.get(url, params=params, headers=headers)
     print "get offline count:", r.content
     assert(r.status_code == 200)
+
+def TestDequeueMessage():
+
+    TestGetOfflineCount()
+
+    url = URL + "/messages"
+    headers = {}
+    headers["Authorization"] = "Bearer " + access_token
+    headers["Content-Type"] = "application/plain"    
+    r = requests.get(url, headers=headers)
+
+    assert(r.status_code == 200)
+    msgs = json.loads(r.content)
+
+    if not msgs["data"]:
+        return
+
+    m = msgs["data"][-1]
+    print "last msgid:", m['id']
+
+    data = {"msgid":m['id']}
+    url = URL + "/messages/dequeue"
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    print "dequeue message:", r.content
+    assert(r.status_code == 200)
+
+    TestGetOfflineCount()
+        
 
 
 def login(uid):
@@ -236,8 +268,8 @@ def login(uid):
     return obj["data"]["token"]
 
 
-access_token = login(1000)
-print "token:", access_token    
+access_token = login(1)
+print "token:", access_token
 
 TestImage()
 TestAudio()
@@ -247,3 +279,4 @@ TestForbidden()
 TestGroupNotification()
 TestCustomerAuth()
 TestGetOfflineCount()
+TestDequeueMessage()
