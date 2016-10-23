@@ -18,6 +18,26 @@ class User(object):
         uid, appid, name = rds.hget(key, "user_id", "app_id", "user_name")
         return uid, appid, name
 
+
+    @staticmethod
+    def save_user(rds, appid, uid, name, avatar, token):
+        key = "users_%d_%d"%(appid, uid)
+        obj = {
+            "access_token":token,
+            "name":name,
+            "avatar":avatar
+        }
+        rds.hmset(key, obj)
+        
+    @staticmethod
+    def save_token(rds, appid, uid, token):
+        key = "access_token_%s"%token
+        obj = {
+            "user_id":uid,
+            "app_id":appid
+        }
+        rds.hmset(key, obj)
+
     @staticmethod
     def save_user_access_token(rds, appid, uid, name, token):
         pipe = rds.pipeline()

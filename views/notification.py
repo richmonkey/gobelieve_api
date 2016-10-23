@@ -9,7 +9,7 @@ import logging
 import json
 import time
 from authorization import require_auth
-from models.user_model import User
+from models.user import User
 
 app = Blueprint('notification', __name__)
         

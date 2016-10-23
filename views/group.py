@@ -12,7 +12,7 @@ import umysql
 from authorization import require_application_or_person_auth
 from authorization import require_auth
 from models.group_model import Group
-from models.user_model import User
+from models.user import User
 
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
@@ -264,7 +264,7 @@ def group_member_setting(gid, memberid):
     obj = json.loads(request.data)
     if obj.has_key('quiet'):
         #免打扰
-        User.set_group_notification_quiet(rds, appid, uid, gid, obj['quiet'])
+        User.set_user_notification_quiet(rds, appid, uid, gid, obj['quiet'])
     else:
         raise ResponseMeta(400, "no action")
 

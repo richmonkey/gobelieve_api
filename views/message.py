@@ -9,6 +9,7 @@ import json
 from libs.crossdomain import crossdomain
 from authorization import require_application_auth
 from authorization import require_auth
+from authorization import require_application_or_person_auth
 from libs.response_meta import ResponseMeta
 from libs.util import make_response
 
@@ -167,14 +168,16 @@ def dequeue_message():
 
     r = rpc.dequeue_message(appid, uid, msgid)
     logging.debug("dequue message:%s", r)
-    return make_response(200, {"success":True})
+    return make_response(200, {"data":{"success":True}})
 
 @app.route('/messages/offline', methods=['GET'])
-@require_application_auth
+@require_application_or_person_auth
 def get_offline_message():
     appid = request.appid
     uid = int(request.args.get("uid", 0))
-    print request.args
+    if not uid:
+        uid = request.uid
+
     if not uid:
         raise ResponseMeta(400, "invalid uid")
 
@@ -190,6 +193,7 @@ def get_offline_message():
 
     #获取离线消息数目
     count = get_offline_count(appid, uid, platform_id, device_id)
-    data = {"count":count}
+    new = 1 if count > 0 else 0
+    data = {"data":{"count":count, "new":new}}
     return make_response(200, data)
 

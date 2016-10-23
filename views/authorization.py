@@ -75,7 +75,17 @@ def get_app_secret(db, appid):
     cursor = db.execute(sql, appid)
     obj = cursor.fetchone()
     return obj["secret"]
-    
+
+def get_app_key(db, appid):
+    if hasattr(config, "APPID") and hasattr(config, "APPKEY"):
+        if config.APPID == appid:
+            return config.APPKEY
+
+    sql = "SELECT `key`, secret FROM app WHERE id=%s"
+    cursor = db.execute(sql, appid)
+    obj = cursor.fetchone()
+    return obj["key"]
+
 def require_application_auth(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -134,5 +144,29 @@ def require_application_or_person_auth(f):
         else:
             return INVALID_AUTHORIZATION()
 
+    return wrapper
+    
+def require_client_auth(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if 'Authorization' in request.headers:
+            basic = request.headers.get('Authorization')[6:]
+        else:
+            return INVALID_APPID()
+        logging.debug("basic:%s", basic)
+        basic = base64.b64decode(basic)
+        sp = basic.split(":", 1)
+        if len(sp) != 2:
+            return INVALID_APPID()
+        appid = int(sp[0])
+        appkey = sp[1]
+
+        dbAppKey = get_app_key(g._db, appid)
+        if dbAppKey.lower() != appkey.lower():
+            return INVALID_APPID()
+
+        logging.debug("appid:%s appkey:%s", appid, appkey)
+        request.appid = appid
+        return f(*args, **kwargs)
     return wrapper
     
