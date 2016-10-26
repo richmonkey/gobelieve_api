@@ -23,6 +23,7 @@ from views import notification
 from views import customer
 from views import supporter
 from views import authorization
+from views import push
 from libs.response_meta import ResponseMeta
 from libs.mysql import Mysql
 from libs.fs import FS
@@ -118,6 +119,7 @@ def init_app(app):
     app.register_blueprint(notification.app)
     app.register_blueprint(customer.app)
     app.register_blueprint(supporter.app)
+    app.register_blueprint(push.app)
 
 random.seed()
 
