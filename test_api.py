@@ -191,21 +191,37 @@ def TestForbidden():
     assert(r.status_code == 200)
     print "set forbidden:0 success"
 
-def TestCustomerAuth():
-    appid = 1519
+def TestCustomerRegister():
+    appid = 7
     uid = 1000
-    url = URL + "/auth/customer"
+    url = URL + "/customer/register"
 
     data = {"appid":appid, "uid":uid, "user_name":"测试客服"}
-    headers = {'Content-Type': 'application/json; charset=UTF-8'}
 
+    basic = base64.b64encode(str(APP_ID) + ":" + APP_KEY)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               "Authorization": "Basic " + basic}
+
+    
     r = requests.post(url, data=json.dumps(data), headers=headers)
     assert(r.status_code == 200)
-    print "customer auth:", r.content
+    print "customer register:", r.content
 
 
+    obj = json.loads(r.content)
+    token = obj['data']['token']
+    store_id = obj['data']['store_id']
 
+    url = URL + "/supporters"
+    params = {"store_id":store_id}
 
+    headers = {}
+    headers["Authorization"] = "Bearer " + token
+    headers["Content-Type"] = "application/json; charset=UTF-8"
+
+    r = requests.get(url, params=params, headers=headers)
+    assert(r.status_code == 200)
+    print r.content
 
 
 def TestGetOfflineCount():
@@ -277,6 +293,6 @@ TestDeviceToken()
 TestRoomMessage()
 TestForbidden()
 TestGroupNotification()
-TestCustomerAuth()
+TestCustomerRegister()
 TestGetOfflineCount()
 TestDequeueMessage()

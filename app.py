@@ -20,13 +20,14 @@ from views import message
 from views import group
 from views import user
 from views import notification
-
-import config
+from views import customer
+from views import supporter
 from views import authorization
 from libs.response_meta import ResponseMeta
 from libs.mysql import Mysql
 from libs.fs import FS
 
+import config
 
 app = Flask(__name__)
 app.debug = config.DEBUG
@@ -38,7 +39,6 @@ rds = redis.StrictRedis(host=config.REDIS_HOST, password=config.REDIS_PASSWORD, 
 
 authorization.rds = rds
 group.rds = rds
-user.rds = rds
 notification.rds = rds
 
 LOGGER = logging.getLogger('')
@@ -116,6 +116,8 @@ def init_app(app):
     app.register_blueprint(group.app)
     app.register_blueprint(user.app)
     app.register_blueprint(notification.app)
+    app.register_blueprint(customer.app)
+    app.register_blueprint(supporter.app)
 
 random.seed()
 

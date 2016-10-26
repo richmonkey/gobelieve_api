@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import config
-import requests
 from urllib import urlencode
 from flask import request, Blueprint
 import flask
@@ -11,6 +10,7 @@ import time
 import random
 from libs.crossdomain import crossdomain
 from libs.util import make_response
+from libs.util import create_access_token
 from libs.response_meta import ResponseMeta
 from authorization import require_application_or_person_auth
 from authorization import require_application_auth
@@ -19,98 +19,18 @@ from authorization import require_client_auth
 from models.user import User
 from models.app import App
 from models.customer import Customer
+from rpc import init_message_queue
 
 app = Blueprint('user', __name__)
 
-rds = None
-
-UNICODE_ASCII_CHARACTER_SET = ('abcdefghijklmnopqrstuvwxyz'
-                               'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                               '0123456789')
-
-def random_token_generator(length=30, chars=UNICODE_ASCII_CHARACTER_SET):
-    rand = random.SystemRandom()
-    return ''.join(rand.choice(chars) for x in range(length))
-
-def create_access_token():
-    return random_token_generator()
 
 def publish_message(rds, channel, msg):
     rds.publish(channel, msg)
 
-im_url=config.IM_RPC_URL
-
-
-@app.route("/customer/register", methods=["POST"])
-@crossdomain(origin='*', headers=['Authorization'])
-@require_client_auth
-def customer_register():
-    rds = g.rds
-    db = g._db
-    obj = json.loads(request.data)
-    appid = obj.get("appid", 0)
-    uid = obj.get("uid", "")
-    name = obj.get("user_name", "")
-    avatar = obj.get("avatar", "")
-
-    if not appid:
-        raise ResponseMeta(400, "invalid param")
-    
-    store_id = App.get_store_id(db, appid)
-    if not store_id:
-        raise ResponseMeta(400, "app do not support customer")
-
-    if not uid:
-        client_id = Customer.generate_client_id(rds)
-    else:
-        client_id = Customer.get_client_id(rds, appid, uid)
-        if not client_id:
-            client_id = Customer.generate_client_id(rds)
-            Customer.set_client_id(rds, appid, uid, client_id)
-
-    token = User.get_user_access_token(rds, appid, client_id)
-    if not token:
-        token = create_access_token()
-        User.add_user_count(rds, appid, client_id)
-
-    User.save_user(rds, appid, client_id, name, avatar, token)
-    User.save_token(rds, appid, client_id, token)
-
-    if obj.has_key("platform_id") and obj.has_key("device_id"):
-        platform_id = obj['platform_id']
-        device_id = obj['device_id']
-        s = init_message_queue(appid, client_id, platform_id, device_id)
-        if s:
-            logging.error("init message queue success")
-        else:
-            logging.error("init message queue fail")
-        
-    resp = {
-        "token":token,
-        "store_id":store_id,
-        "client_id":client_id,
-    }
-    data = {"data":resp}
-    return make_response(200, data)
-
-
-def init_message_queue(appid, uid, platform_id, device_id):
-    obj = {
-        "appid":appid,
-        "uid":uid,
-        "device_id":device_id,
-        "platform_id":platform_id
-    }
-
-    url = im_url + "/init_message_queue"
-    logging.debug("url:%s", url)
-    headers = {"Content-Type":"application/json"}
-    res = requests.post(url, data=json.dumps(obj), headers=headers)
-    return res.status_code == 200
-
 @app.route("/auth/grant", methods=["POST"])
 @require_application_auth
 def grant_auth_token():
+    rds = g.rds
     appid = request.appid
     obj = json.loads(request.data)
     uid = obj["uid"]
@@ -189,6 +109,7 @@ def unbind_device_token():
 @app.route("/users/<int:uid>", methods=["POST"])
 @require_application_auth
 def set_user_name(uid):
+    rds = g.rds
     appid = request.appid
     obj = json.loads(request.data)
     name = obj["name"] if obj.has_key("name") else ""
