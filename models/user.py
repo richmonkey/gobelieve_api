@@ -208,3 +208,21 @@ class User(object):
         key = "statistics_users_%d"%appid
         rds.pfadd(key, uid)
 
+
+    @staticmethod
+    def set_seller(rds, appid, uid, store_id, seller_id):
+        key = "users_%s_%s"%(appid, uid)
+        obj = {
+            "store_id":store_id,
+            "seller_id":seller_id
+        }
+        rds.hmset(key, obj)
+
+    @staticmethod
+    def get_seller(rds, appid, uid):
+        key = "users_%s_%s"%(appid, uid)
+        store_id, seller_id = rds.hmget(key, "store_id", "seller_id")
+        store_id = int(store_id) if store_id else 0
+        seller_id = int(seller_id) if seller_id else 0
+        return store_id, seller_id
+    

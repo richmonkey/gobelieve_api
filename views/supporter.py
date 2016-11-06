@@ -26,6 +26,22 @@ from libs.util import make_json_response
 app = Blueprint('supporter', __name__)
 
 
+def get_new_seller(rds, sellers):
+    online_sellers = []
+    for seller in sellers:
+        status = Supporter.get_user_status(rds, seller['id'])
+        seller['status'] = status
+        if status == Supporter.STATUS_ONLINE:
+            online_sellers.append(seller)
+
+    if len(online_sellers) == 0:
+        #假设第一个客服是管理员
+        seller = sellers[0]
+    else:
+        index = random.randint(0, len(online_sellers) - 1)
+        seller = sellers[index]
+    return seller
+
 #获取一个客服id
 @app.route("/supporters", methods=["GET"])
 @require_auth
@@ -41,26 +57,26 @@ def get_one_supporter():
 
     if not store_id:
         raise ResponseMeta(400, 'require store_id param')
-    
-    online_sellers = []
-    sellers = Seller.get_sellers(db, store_id)
 
+    sellers = Seller.get_sellers(db, store_id)
     if not sellers:
         raise ResponseMeta(400, 'store no supporter')
 
-    for seller in sellers:
-        status = Supporter.get_user_status(rds, seller['id'])
-        seller['status'] = status
-        if status == Supporter.STATUS_ONLINE:
-            online_sellers.append(seller)
-
-    if len(online_sellers) == 0:
-        #假设第一个客服是管理员
-        seller = sellers[0]
-    else:
-        index = random.randint(0, len(online_sellers) - 1)
-        seller = sellers[index]
-
+    seller = None
+    #获取上次对话的客服id
+    last_store_id, last_seller_id = User.get_seller(rds, appid, uid)
+    if store_id == last_store_id and last_seller_id > 0:
+        for s in sellers:
+            if s['id'] == last_seller_id:
+                status = Supporter.get_user_status(rds, s['id'])
+                s['status'] = status
+                seller = s
+                break
+                
+    if not seller:
+        seller = get_new_seller(rds, sellers)
+        User.set_seller(rds, appid, uid, store_id, seller['id'])
+        
     name = ""
     if seller.has_key('name') and seller['name']:
         name = seller['name'].split('@')[0]
