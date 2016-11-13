@@ -41,6 +41,7 @@ def grant_auth_token():
         User.add_user_count(rds, appid, uid)
 
     User.save_user_access_token(rds, appid, uid, name, token)
+    User.set_turn_password(rds, appid, uid, token)
 
     if obj.has_key("platform_id") and obj.has_key("device_id"):
         platform_id = obj['platform_id']

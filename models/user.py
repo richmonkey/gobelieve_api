@@ -226,3 +226,8 @@ class User(object):
         seller_id = int(seller_id) if seller_id else 0
         return store_id, seller_id
     
+    @staticmethod
+    def set_turn_password(rds, appid, uid, password):
+        u = "%s_%s"%(appid, uid)
+        key = "turn/user/%s/password"%u
+        rds.set(key, password)
