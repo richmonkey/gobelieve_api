@@ -30,6 +30,25 @@ gobelieve API
 
 
 
+### 获取历史消息
+- 请求地址：** GET /supporters?store_id=咨询台id **
+- 是否认证：客户端认证
+- 请求参数: store=(可选)
+
+        
+- 成功响应：200
+
+
+        {
+            "seller_id":"客服id",
+            "name":"客服名称",
+            "avatar":"客服头像",
+            "status":"客服状态 online/offline"
+        }
+        
+            
+- 操作失败：
+  400 非法参数
 
 ### 获取离线消息数目
 - 请求地址：** GET /messages/offline **

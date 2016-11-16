@@ -43,7 +43,8 @@ def get_new_seller(rds, sellers):
     return seller
 
 #获取一个客服id
-@app.route("/supporters", methods=["GET"])
+@app.route("/supporters", methods=["GET", "OPTIONS"])
+@crossdomain(origin='*', headers=['Authorization'])
 @require_auth
 def get_one_supporter():
     rds = g.rds
