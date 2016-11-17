@@ -31,7 +31,7 @@ def customer_register():
     db = g._db
     obj = json.loads(request.data)
     appid = obj.get("appid", 0)
-    uid = obj.get("uid", "")
+    uid = obj.get("customer_id", "")
     name = obj.get("user_name", "")
     avatar = obj.get("avatar", "")
 

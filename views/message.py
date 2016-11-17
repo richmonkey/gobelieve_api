@@ -13,6 +13,7 @@ from authorization import require_application_or_person_auth
 from libs.response_meta import ResponseMeta
 from libs.util import make_response
 
+from models.customer import Customer
 from rpc import post_message
 from rpc import send_group_notification_s
 from rpc import get_offline_count
@@ -174,9 +175,13 @@ def dequeue_message():
 @require_application_or_person_auth
 def get_offline_message():
     appid = request.appid
+    customer_id = request.args.get("customer_id", "")
     uid = int(request.args.get("uid", 0))
     if not uid:
         uid = request.uid
+
+    if not uid and customer_id:
+        uid = Customer.get_client_id(rds, appid, customer_id)
 
     if not uid:
         raise ResponseMeta(400, "invalid uid")
