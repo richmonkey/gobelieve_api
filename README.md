@@ -53,12 +53,12 @@ gobelieve API
 ### 获取离线消息数目
 - 请求地址：** GET /messages/offline **
 - 是否认证：服务器认证
-- 请求参数: uid=&platform_id=(可选)&device_id=(可选)
+- 请求参数: customer_id=&platform_id=(可选)&device_id=(可选)
         
 - 成功响应：200
 
         {
-            "count":"离线消息数"
+            "new":"1或者0"
         }
 
 - 操作失败：
