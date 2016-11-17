@@ -2,7 +2,7 @@
 import config
 import requests
 from urllib import urlencode
-from flask import request, Blueprint
+from flask import request, Blueprint, g
 import flask
 import logging
 import json
@@ -174,10 +174,11 @@ def dequeue_message():
 @app.route('/messages/offline', methods=['GET'])
 @require_application_or_person_auth
 def get_offline_message():
+    rds = g.rds
     appid = request.appid
     customer_id = request.args.get("customer_id", "")
     uid = int(request.args.get("uid", 0))
-    if not uid:
+    if not uid and  hasattr(request, 'uid'):
         uid = request.uid
 
     if not uid and customer_id:
