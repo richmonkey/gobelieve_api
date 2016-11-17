@@ -12,8 +12,9 @@ gobelieve API
 
         {
             "appid":"应用id(整型)",
-            "uid":"用户id(整型)",
-            "user_name":"用户名称",
+            "customer_id":"顾客id",
+            "name":"用户名称",
+            "avatar":"头像url",
             "platform_id":"平台id,1:ios, 2:android, 3:web(可选)",
             "device_id":"设备id(可选)"
         }
@@ -22,7 +23,8 @@ gobelieve API
 
         {
             "token":"访问token",
-            "store_id":"咨询台id"
+            "store_id":"咨询台id",
+            "client_id":"客户id"
         }
 
 - 操作失败：
@@ -66,7 +68,6 @@ gobelieve API
 
 
 
-
 ### 获取历史消息
 - 请求地址：** GET /messages **
 - 是否认证：客户端认证
@@ -83,22 +84,6 @@ gobelieve API
             }
             ...
         ]
-
-- 操作失败：
-  400 非法参数
-
-
-### 将消息移出离线队列
-- 请求地址：** POST /messages/dequeue **
-- 是否认证：客户端认证
-- 请求内容:
-
-
-        {
-            "msgid":"最近消息id",
-        }
-        
-- 成功响应：200
 
 - 操作失败：
   400 非法参数

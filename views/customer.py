@@ -32,7 +32,7 @@ def customer_register():
     obj = json.loads(request.data)
     appid = obj.get("appid", 0)
     uid = obj.get("customer_id", "")
-    name = obj.get("user_name", "")
+    name = obj.get("name", "")
     avatar = obj.get("avatar", "")
 
     if not appid:
