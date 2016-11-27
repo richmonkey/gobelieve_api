@@ -20,12 +20,26 @@ from models.user import User
 from models.app import App
 from models.customer import Customer
 from rpc import init_message_queue
+import hashlib
 
 app = Blueprint('user', __name__)
 
 
 def publish_message(rds, channel, msg):
     rds.publish(channel, msg)
+
+
+
+def saslprep(string):
+    return string
+
+def ha1(username, realm, password):
+    return hashlib.md5(':'.join((username, realm, saslprep(password)))).digest()
+
+def hmac(username, realm, password):
+    return ha1(username, realm, password).encode('hex')
+
+
 
 @app.route("/auth/grant", methods=["POST"])
 @require_application_auth
@@ -41,6 +55,11 @@ def grant_auth_token():
         User.add_user_count(rds, appid, uid)
 
     User.save_user_access_token(rds, appid, uid, name, token)
+
+    u = "%s_%s"%(appid, uid)
+    realm = "com.beetle.face"
+    key = hmac(u, realm, token)
+    User.set_turn_key(rds, appid, uid, key)
     User.set_turn_password(rds, appid, uid, token)
 
     if obj.has_key("platform_id") and obj.has_key("device_id"):
