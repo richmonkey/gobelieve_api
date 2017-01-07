@@ -53,11 +53,11 @@ def create_group():
     
     s = 1 if is_super else 0
     content = "%d,%d,%d"%(gid, appid, s)
-    publish_message("group_create", content)
+    publish_message(g.rds, "group_create", content)
     
     for mem in members:
         content = "%d,%d"%(gid, mem)
-        publish_message("group_member_add", content)
+        publish_message(g.rds, "group_member_add", content)
     
     v = {
         "group_id":gid, 
@@ -134,7 +134,7 @@ def delete_group(gid):
     send_group_notification(appid, gid, op, None)
 
     content = "%d"%gid
-    publish_message("group_disband", content)
+    publish_message(g.rds, "group_disband", content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -192,7 +192,7 @@ def add_group_member(gid):
         send_group_notification(appid, gid, op, [member_id])
          
         content = "%d,%d"%(gid, member_id)
-        publish_message("group_member_add", content)
+        publish_message(g.rds, "group_member_add", content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -210,7 +210,7 @@ def remove_group_member(appid, gid, memberid):
     send_group_notification(appid, gid, op, [memberid])
      
     content = "%d,%d"%(gid,memberid)
-    publish_message("group_member_remove", content)
+    publish_message(g.rds, "group_member_remove", content)
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
 @require_application_or_person_auth
