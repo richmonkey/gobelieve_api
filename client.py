@@ -14,23 +14,34 @@ import os
 import random
 import redis
 
-from views import message
-from views import group
+from views import image
+from views import audio
 from views import user
+from views import notification
+from views import customer
+from views import supporter
+from views import push
+from views import client_group
 from libs.response_meta import ResponseMeta
 from libs.mysql import Mysql
+from libs.fs import FS
 
 import config
 
 app = Flask(__name__)
 app.debug = config.DEBUG
 
+FS.HOST = config.FS_HOST
+FS.PORT = config.FS_PORT
+
 rds = redis.StrictRedis(host=config.REDIS_HOST, password=config.REDIS_PASSWORD, port=config.REDIS_PORT, db=config.REDIS_DB)
 
 
+LOGGER = logging.getLogger('')
+
 def before_request():
-    logging.debug("before request")
-    g.rds= rds
+    LOGGER.debug("before request")
+    g.rds = rds
 
     cnf = config.MYSQL
     imcnf = config.MYSQL_IM
@@ -43,7 +54,7 @@ def before_request():
         g._imdb = Mysql(*imcnf)
 
 def app_teardown(exception):
-    logging.debug('app_teardown')
+    LOGGER.debug('app_teardown')
     # 捕获teardown时的mysql异常
     try:
         db = getattr(g, '_db', None)
@@ -62,7 +73,7 @@ def app_teardown(exception):
 
 
 def http_error_handler(err):
-    logging.error(err)
+    LOGGER.error(err)
     return ResponseMeta(code=err.code, http_code=err.code)
 
 
@@ -95,11 +106,13 @@ def init_app(app):
     app.register_error_handler(ResponseMeta, response_meta_handler)
     app.register_error_handler(Exception, generic_error_handler)
 
-
-    app.register_blueprint(message.app)
-    app.register_blueprint(group.app)
-    app.register_blueprint(user.app)
-
+    app.register_blueprint(image.app)
+    app.register_blueprint(audio.app)
+    app.register_blueprint(client_group.app)
+    app.register_blueprint(notification.app)
+    app.register_blueprint(customer.app)
+    app.register_blueprint(supporter.app)
+    app.register_blueprint(push.app)
 
 random.seed()
 
@@ -109,4 +122,4 @@ init_logger(log)
 init_app(app)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=6000)

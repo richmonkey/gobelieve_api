@@ -239,34 +239,6 @@ def TestGetOfflineCount():
     print "get offline count:", r.content
     assert(r.status_code == 200)
 
-def TestDequeueMessage():
-
-    TestGetOfflineCount()
-
-    url = URL + "/messages"
-    headers = {}
-    headers["Authorization"] = "Bearer " + access_token
-    headers["Content-Type"] = "application/plain"    
-    r = requests.get(url, headers=headers)
-
-    assert(r.status_code == 200)
-    msgs = json.loads(r.content)
-
-    if not msgs["data"]:
-        return
-
-    m = msgs["data"][-1]
-    print "last msgid:", m['id']
-
-    data = {"msgid":m['id']}
-    url = URL + "/messages/dequeue"
-    r = requests.post(url, data=json.dumps(data), headers=headers)
-    print "dequeue message:", r.content
-    assert(r.status_code == 200)
-
-    TestGetOfflineCount()
-        
-
 
 def login(uid):
     url = URL + "/auth/grant"
@@ -295,4 +267,4 @@ TestForbidden()
 TestGroupNotification()
 TestCustomerRegister()
 TestGetOfflineCount()
-TestDequeueMessage()
+

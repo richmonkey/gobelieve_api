@@ -13,8 +13,6 @@ from models.user import User
 
 app = Blueprint('notification', __name__)
         
-rds = None
-    
 @app.route("/notification/groups/<int:gid>", methods=["POST"])
 @require_auth
 def enable_group_notification(gid):
@@ -23,5 +21,5 @@ def enable_group_notification(gid):
     
     obj = json.loads(request.data)
     quiet = obj["quiet"]
-    User.set_group_notification_quiet(rds, appid, uid, quiet)
+    User.set_group_notification_quiet(g.rds, appid, uid, quiet)
     return ""

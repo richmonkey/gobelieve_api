@@ -18,7 +18,7 @@ from libs.util import make_response
 from libs.response_meta import ResponseMeta
 from rpc import send_group_notification
 
-app = Blueprint('group', __name__)
+app = Blueprint('c_group', __name__, url_prefix="/client")
 
 im_url=config.IM_RPC_URL
 
@@ -28,7 +28,7 @@ def publish_message(rds, channel, msg):
 
         
 @app.route("/groups", methods=["POST"])
-@require_application_or_person_auth
+@require_auth
 def create_group():
     appid = request.appid
     obj = json.loads(request.data)
@@ -40,24 +40,16 @@ def create_group():
     if hasattr(request, 'uid') and request.uid != master:
         raise ResponseMeta(400, "master must be self")
         
-    gid = 0
-    if config.EXTERNAL_GROUP_ID:
-        gid = obj['group_id'] if obj.has_key('group_id') else 0
-
-    if gid > 0:
-        gid = Group.create_group_ext(g._imdb, gid, appid, master, name, 
-                                     is_super, members)
-    else:
-        gid = Group.create_group(g._imdb, appid, master, name, 
-                                 is_super, members)
+    gid = Group.create_group(g._imdb, appid, master, name, 
+                             is_super, members)
     
     s = 1 if is_super else 0
     content = "%d,%d,%d"%(gid, appid, s)
-    publish_message("group_create", content)
+    publish_message(g.rds, "group_create", content)
     
     for mem in members:
         content = "%d,%d"%(gid, mem)
-        publish_message("group_member_add", content)
+        publish_message(g.rds, "group_member_add", content)
     
     v = {
         "group_id":gid, 
@@ -121,9 +113,15 @@ def get_groups():
     return make_response(200, resp)
 
 @app.route("/groups/<int:gid>", methods=["DELETE"])
-@require_application_or_person_auth
+@require_auth
 def delete_group(gid):
     appid = request.appid
+
+    #群组管理员有权限解散群
+    master = Group.get_group_master(g._imdb, gid)
+    if master != request.uid:
+        raise ResponseMeta(400, "no authority")
+    
     Group.disband_group(g._imdb, gid)
 
     v = {
@@ -134,14 +132,14 @@ def delete_group(gid):
     send_group_notification(appid, gid, op, None)
 
     content = "%d"%gid
-    publish_message("group_disband", content)
+    publish_message(g.rds, "group_disband", content)
 
     resp = {"success":True}
     return make_response(200, resp)
 
 
 @app.route("/groups/<int:gid>", methods=["PATCH"])
-@require_application_or_person_auth
+@require_auth
 def update_group(gid):
     appid = request.appid
     obj = json.loads(request.data)
@@ -159,7 +157,7 @@ def update_group(gid):
     return ""
 
 @app.route("/groups/<int:gid>/members", methods=["POST"])
-@require_application_or_person_auth
+@require_auth
 def add_group_member(gid):
     appid = request.appid
     obj = json.loads(request.data)
@@ -192,7 +190,7 @@ def add_group_member(gid):
         send_group_notification(appid, gid, op, [member_id])
          
         content = "%d,%d"%(gid, member_id)
-        publish_message("group_member_add", content)
+        publish_message(g.rds, "group_member_add", content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -210,19 +208,15 @@ def remove_group_member(appid, gid, memberid):
     send_group_notification(appid, gid, op, [memberid])
      
     content = "%d,%d"%(gid,memberid)
-    publish_message("group_member_remove", content)
+    publish_message(g.rds, "group_member_remove", content)
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
-@require_application_or_person_auth
-def leave_group_member(gid, memberid):
+@require_auth
+def leave_group(gid, memberid):
     appid = request.appid
-    if hasattr(request, "uid") and request.uid > 0:
-        #群组管理员或者成员本身有权限退出群
-        if memberid != request.uid:
-            master = Group.get_group_master(g._imdb, gid)
-            if master != request.uid:
-                raise ResponseMeta(400, "no authority")
-
+    #群组管理员或者成员本身有权限退出群
+    if memberid != request.uid:
+        raise ResponseMeta(400, "no authority")
 
     remove_group_member(appid, gid, memberid)
 
@@ -231,14 +225,14 @@ def leave_group_member(gid, memberid):
 
 
 @app.route("/groups/<int:gid>/members", methods=["DELETE"])
-@require_application_or_person_auth
+@require_auth
 def delete_group_member(gid):
     appid = request.appid
-    if hasattr(request, "uid") and request.uid > 0:
-        #群组管理员或者成员本身有权限退出群
-        master = Group.get_group_master(g._imdb, gid)
-        if master != request.uid:
-            raise ResponseMeta(400, "no authority")
+
+    #群组管理员有权限删除群成员
+    master = Group.get_group_master(g._imdb, gid)
+    if master != request.uid:
+        raise ResponseMeta(400, "no authority")
 
     members = json.loads(request.data)
     if len(members) == 0:

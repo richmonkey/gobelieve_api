@@ -12,7 +12,6 @@ import md5
 import base64
 import config
 
-rds = None
 
 def access_token_key(token):
     return "access_token_" + token
@@ -59,7 +58,7 @@ def require_auth(f):
         else:
             return INVALID_ACCESS_TOKEN()
         t = AccessToken()
-        if not t.load(rds, tok):
+        if not t.load(g.rds, tok):
             return INVALID_ACCESS_TOKEN()
         request.uid = int(t.user_id)
         request.appid = int(t.app_id)
@@ -136,7 +135,7 @@ def require_application_or_person_auth(f):
         elif auth[:7] == "Bearer ":
             tok = auth[7:]
             t = AccessToken()
-            if not t.load(rds, tok):
+            if not t.load(g.rds, tok):
                 return INVALID_ACCESS_TOKEN()
             request.uid = int(t.user_id)
             request.appid = int(t.app_id)
