@@ -34,6 +34,34 @@ def amr_to_mp3(data):
     return mp3_data
 
 
+
+@app.route('/v2/audios', methods=['POST'])
+@require_auth
+def upload_form_file():
+    if 'file' not in request.files:
+        return NO_CONTENT()
+    
+    f = request.files['file']
+    data = f.read()
+    if not data:
+        return NO_CONTENT()
+
+    md5_value = md5.new(data).hexdigest()
+    path = "/audios/" + md5_value
+    r = FS.upload(path, request.data)
+    if not r:
+        return make_response(400, {"error":"upload file fail"})
+    
+    
+    obj = {}
+    url = request.url_root + "audios/" + md5_value
+    src = "/audio/" + md5_value
+    obj["src"] = src
+    obj["src_url"] = url
+    return make_response(200, obj)
+    
+
+
 @app.route('/audios', methods=['POST'])
 @require_auth
 def upload_file():

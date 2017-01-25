@@ -22,6 +22,14 @@ APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 #URL = "http://api.gobelieve.io"
 URL = "http://dev.api.gobelieve.io"
 
+#表单上传图片
+def TestFormImage():
+    url = URL + "/v2/images"
+    files = {'file': ('test.jpg', open('data/test.jpg', 'rb'), "image/jpeg")}
+    headers = {}
+    headers["Authorization"] = "Bearer " + access_token
+    r = requests.post(url, headers=headers, files=files)
+    print r.status_code, r.content
 
 def TestImage():
     url = URL + "/images"
@@ -55,6 +63,17 @@ def TestImage():
     f.write(r.content)
     f.close()
 
+def TestFormAudio():
+    url = URL + "/v2/audios"
+
+    files = {'file': ('test.amr', open('data/test.amr', 'rb'), "application/plain")}
+    headers = {}
+    headers["Authorization"] = "Bearer " + access_token
+    r = requests.post(url, headers=headers, files=files)
+    print r.status_code, r.content
+
+
+    
 def TestAudio():
     url = URL + "/audios"
     f = open("data/test.amr", "rb")
@@ -259,6 +278,9 @@ def login(uid):
 access_token = login(1)
 print "token:", access_token
 
+
+TestFormImage()
+TestFormAudio()
 TestImage()
 TestAudio()
 TestDeviceToken()
