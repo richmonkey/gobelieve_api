@@ -43,7 +43,7 @@ def upload_form_image():
 
     r = FS.upload(path, data)
     if not r:
-        return make_response(400, {"errpr":"upload file fail"})
+        return make_response(400, {"error":"upload file fail"})
     
     url = request.url_root + "images/" + name + ext
     src = "/images/" + name + ext

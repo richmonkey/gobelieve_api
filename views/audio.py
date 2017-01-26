@@ -48,7 +48,7 @@ def upload_form_file():
 
     md5_value = md5.new(data).hexdigest()
     path = "/audios/" + md5_value
-    r = FS.upload(path, request.data)
+    r = FS.upload(path, data)
     if not r:
         return make_response(400, {"error":"upload file fail"})
     
