@@ -45,73 +45,73 @@ print "token:", access_token
 def TestGroup():
     headers = {}
     headers["Authorization"] = "Bearer " + access_token
-    headers["Content-Type"] = "image/jpeg"
+    headers["Content-Type"] = "application/json"
 
-    url = URL + "/groups"
+    url = URL + "/client/groups"
 
-    group = {"master":13635273143,"members":[13635273143], "name":"test", "super":True}
+    group = {"master":13635273143,"members":[{"uid":13635273143, "name":"测试"}], "name":"test", "super":True}
     r = requests.post(url, data=json.dumps(group), headers = headers)
     assert(r.status_code == 200)
     obj = json.loads(r.content)
     group_id = obj["data"]["group_id"]
     print "new group id:", group_id
 
-    url = URL + "/groups/%s"%str(group_id)
+    url = URL + "/client/groups/%s"%str(group_id)
     r = requests.patch(url, data=json.dumps({"name":"test_new"}), headers = headers)
     assert(r.status_code == 200)
     print "update group name success"
 
 
-    url = URL + "/groups/%s"%str(group_id)
+    url = URL + "/client/groups/%s"%str(group_id)
     r = requests.get(url, headers = headers)
     assert(r.status_code == 200)
     print "get group:", r.content
 
 
-    url = URL + "/groups"
+    url = URL + "/client/groups"
     r = requests.get(url, headers = headers)
     assert(r.status_code == 200)
     print "get all group:", r.content
     
 
-    url = URL + "/groups?fields=members,quiet"
+    url = URL + "/client/groups?fields=members,quiet"
     r = requests.get(url, headers = headers)
     assert(r.status_code == 200)
     print "get all group with members:", r.content
     
 
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.post(url, data=json.dumps({"uid":13635273142}), headers = headers)
+    url = URL + "/client/groups/%s/members"%str(group_id)
+    r = requests.post(url, data=json.dumps([{"uid":13635273142, "name":"测试2"}]), headers = headers)
     assert(r.status_code == 200)
 
     print "add group member success"
 
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.post(url, data=json.dumps({"uid":13635273142}), headers = headers)
+    url = URL + "/client/groups/%s/members"%str(group_id)
+    r = requests.post(url, data=json.dumps([{"uid":13635273142}]), headers = headers)
     assert(r.status_code == 200)
     print "repeat add group member success"
 
 
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.post(url, data=json.dumps([13635273144,13635273145]), headers = headers)
+    url = URL + "/client/groups/%s/members"%str(group_id)
+    r = requests.post(url, data=json.dumps([{"uid":13635273144, "name":"测试1"},{"uid":13635273145, "name":"测试2"}]), headers = headers)
     assert(r.status_code == 200)
     print "add group member success"
 
-    url = URL + "/groups/%s/members"%str(group_id)
-    r = requests.delete(url, headers = headers, data=json.dumps([13635273142]))
+    url = URL + "/client/groups/%s/members"%str(group_id)
+    r = requests.delete(url, headers = headers, data=json.dumps([{"uid":13635273142, "name":"测试"}]))
 
     assert(r.status_code == 200)
     print "remove group member success"
 
 
-    url = URL + "/groups/%s/members/13635273143"%str(group_id)
+    url = URL + "/client/groups/%s/members/13635273143"%str(group_id)
     r = requests.delete(url, headers = headers)
 
     assert(r.status_code == 200)
 
     print "leave group success"
 
-    url = URL + "/groups/%s"%str(group_id)
+    url = URL + "/client/groups/%s"%str(group_id)
     r = requests.delete(url, headers = headers)
 
     print "disband group success"

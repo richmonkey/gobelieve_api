@@ -39,15 +39,19 @@ def create_group():
 
     if hasattr(request, 'uid') and request.uid != master:
         raise ResponseMeta(400, "master must be self")
-        
+
+    #支持members参数为对象数组
+    #[{uid:"", name:"", avatar:"可选"}, ...]
+    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+            
     gid = Group.create_group(g._imdb, appid, master, name, 
-                             is_super, members)
+                             is_super, memberIDs)
     
     s = 1 if is_super else 0
     content = "%d,%d,%d"%(gid, appid, s)
     publish_message(g.rds, "group_create", content)
     
-    for mem in members:
+    for mem in memberIDs:
         content = "%d,%d"%(gid, mem)
         publish_message(g.rds, "group_member_add", content)
     
@@ -169,8 +173,11 @@ def add_group_member(gid):
     if len(members) == 0:
         return ""
 
+    #支持members参数为对象数组
+    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    
     g._imdb.begin()
-    for member_id in members:
+    for member_id in memberIDs:
         try:
             Group.add_group_member(g._imdb, gid, member_id)
         except umysql.SQLError, e:
@@ -180,12 +187,18 @@ def add_group_member(gid):
 
     g._imdb.commit()
 
-    for member_id in members:
+    for m in members:
+        member_id = m['uid'] if type(m) == dict else m
         v = {
             "group_id":gid,
             "member_id":member_id,
             "timestamp":int(time.time())
         }
+        if type(m) == dict and m.get('name'):
+            v['name'] = m['name']
+        if type(m) == dict and m.get('avatar'):
+            v['avatar'] = m['avatar']
+            
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
          
@@ -196,7 +209,8 @@ def add_group_member(gid):
     return make_response(200, resp)
 
 
-def remove_group_member(appid, gid, memberid):
+def remove_group_member(appid, gid, member):
+    memberid = member['uid']
     Group.delete_group_member(g._imdb, gid, memberid)
          
     v = {
@@ -204,6 +218,11 @@ def remove_group_member(appid, gid, memberid):
         "member_id":memberid,
         "timestamp":int(time.time())
     }
+    if member.get('name'):
+        v['name'] = member['name']
+    if member.get('avatar'):
+        v['avatar'] = member['avatar']
+            
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
      
@@ -218,7 +237,7 @@ def leave_group(gid, memberid):
     if memberid != request.uid:
         raise ResponseMeta(400, "no authority")
 
-    remove_group_member(appid, gid, memberid)
+    remove_group_member(appid, gid, {"uid":memberid})
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -238,8 +257,14 @@ def delete_group_member(gid):
     if len(members) == 0:
         raise ResponseMeta(400, "no memebers to delete")
 
-    for memberid in members:
-        remove_group_member(appid, gid, memberid)
+
+    for m in members:
+        if type(m) == int:
+            member = {"uid":m}
+        else:
+            member = m
+            
+        remove_group_member(appid, gid, member)
 
     resp = {"success":True}
     return make_response(200, resp)
