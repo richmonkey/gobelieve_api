@@ -55,6 +55,29 @@ def post_peer_messages():
     else:
         return flask.make_response(resp.content, resp.status_code)
 
+#发送通知
+@app.route('/messages/notifications', methods=['POST'])
+@require_application_auth
+def post_notification():
+    appid = request.appid
+    obj = json.loads(request.data)
+    uid = obj["receiver"]
+    content = obj["content"]
+
+    params = {
+        "appid":appid,
+        "uid":uid
+    }
+    url = im_url + "/post_notification?" + urlencode(params)
+
+    headers = {"Content-Type":"text/plain; charset=UTF-8"}
+    resp = requests.post(url, data=content.encode("utf8"), headers=headers)
+    if resp.status_code == 200:
+        return flask.make_response("", 200)
+    else:
+        return flask.make_response(resp.content, resp.status_code)
+
+    
 #发送系统消息
 @app.route('/messages/systems', methods=['POST'])
 @require_application_auth
@@ -76,6 +99,7 @@ def post_system_message():
         return flask.make_response("", 200)
     else:
         return flask.make_response(resp.content, resp.status_code)
+    
 
 #发送系统消息
 @app.route('/messages/rooms', methods=['POST'])
