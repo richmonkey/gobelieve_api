@@ -39,8 +39,21 @@ class Group(object):
     def update_group_name(db, group_id, name):
         sql = "UPDATE `group` SET name=%s WHERE id=%s"
         r = db.execute(sql, (name, group_id))
-        logging.debug("update group rows:%s", r.rowcount)
+        logging.debug("update group name rows:%s", r.rowcount)
 
+    @staticmethod
+    def update_group_notice(db, group_id, notice):
+        sql = "UPDATE `group` SET notice=%s WHERE id=%s"
+        r = db.execute(sql, (notice, group_id))
+        logging.debug("update group notice rows:%s", r.rowcount)
+        
+    @staticmethod
+    def update_group_super(db, group_id, is_super):
+        sql = "UPDATE `group` SET super=%s WHERE id=%s"
+        s = 1 if is_super else 0
+        r = db.execute(sql, (s, group_id))
+        logging.debug("update group super:%s", r.rowcount)
+        
     @staticmethod
     def disband_group(db, group_id):
         db.begin()
@@ -67,10 +80,16 @@ class Group(object):
 
     @staticmethod
     def get_group_members(db, group_id):
-        sql = "SELECT uid FROM group_member WHERE group_id=%s"
+        sql = "SELECT uid, nickname FROM group_member WHERE group_id=%s"
         r = db.execute(sql, group_id)
         return list(r.fetchall())
-        
+
+    @staticmethod
+    def update_nickname(db, group_id, member_id, nickname):
+        sql = "UPDATE `group_member` SET nickname=%s WHERE group_id=%s AND uid=%s"
+        r = db.execute(sql, (nickname, group_id, member_id))
+        logging.debug("update nickname rows:%s", r.rowcount)        
+
     @staticmethod
     def get_group_master(db, group_id):
         sql = "SELECT master FROM `group` WHERE id=%s"
@@ -81,7 +100,7 @@ class Group(object):
 
     @staticmethod
     def get_group(db, group_id):
-        sql = "SELECT id, appid, master, super, name FROM `group` WHERE id=%s"
+        sql = "SELECT id, appid, master, super, name, COALESCE(notice, '') as notice FROM `group` WHERE id=%s"
         cursor = db.execute(sql, group_id)
         r = cursor.fetchone()
         return r
@@ -90,7 +109,6 @@ class Group(object):
     #获取用户所在的所有群
     @staticmethod
     def get_groups(db, appid, uid):
-        sql = "SELECT g.id, g.appid, g.master, g.super, g.name FROM `group_member`, `group` as g WHERE group_member.uid=%s AND group_member.group_id=g.id AND g.appid=%s"
-
+        sql = "SELECT g.id, g.appid, g.master, g.super, g.name, COALESCE(g.notice, '') as notice FROM `group_member`, `group` as g WHERE group_member.uid=%s AND group_member.group_id=g.id AND g.appid=%s"
         cursor = db.execute(sql, (uid, appid))
         return list(cursor.fetchall())

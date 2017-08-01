@@ -189,19 +189,44 @@ class User(object):
         key = "users_%d_%d"%(appid, uid)
         rds.hset(key, "forbidden", fb)
 
+    #个人消息免打扰设置
+    @staticmethod
+    def get_user_do_not_disturb(rds, appid, uid, peer_uid):
+        key = "users_%s_%s"%(appid, uid)
+        q = rds.hget(key, "peer_%d"%peer_uid)
+        return int(q) if q else 0
+
+    @staticmethod
+    def set_user_do_not_disturb(rds, appid, uid, peer_uid, do_not_disturb):
+        key = "users_%s_%s"%(appid, uid)
+        q = 1 if do_not_disturb else 0
+        rds.hset(key, "peer_%d"%peer_uid, do_not_disturb)
+        
+        key = "users_%s_%s_peer_do_not_disturb"%(appid, uid)
+        if do_not_disturb:
+            rds.sadd(key, peer_uid)
+        else:
+            rds.srem(key, peer_uid)
+    
     #群组免打扰设置
     @staticmethod
-    def get_user_notification_quiet(rds, appid, uid, group_id):
+    def get_group_do_not_disturb(rds, appid, uid, group_id):
         key = "users_%s_%s"%(appid, uid)
         quiet = rds.hget(key, "group_%d"%group_id)
         q = int(quiet) if quiet else 0
         return q
 
     @staticmethod
-    def set_user_notification_quiet(rds, appid, uid, group_id, quiet):
+    def set_group_do_not_disturb(rds, appid, uid, group_id, quiet):
         key = "users_%s_%s"%(appid, uid)
         q = 1 if quiet else 0
         rds.hset(key, "group_%d"%group_id, q)
+
+        key = "users_%s_%s_group_do_not_disturb"%(appid, uid)
+        if quiet:
+            rds.sadd(key, group_id)
+        else:
+            rds.srem(key, group_id)
 
     @staticmethod
     def add_user_count(rds, appid, uid):

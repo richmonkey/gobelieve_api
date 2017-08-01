@@ -50,7 +50,11 @@ def send_group_notification_s(appid, gid, notification, members):
     return resp
 
 def send_group_notification(appid, gid, op, members):
-    return send_group_notification_s(appid, gid, json.dumps(op), members)
+    try:
+        return send_group_notification_s(appid, gid, json.dumps(op), members)
+    except Exception, e:
+        logging.warning("send group notification err:%s", e)
+        return None
 
 
 def init_message_queue(appid, uid, platform_id, device_id):

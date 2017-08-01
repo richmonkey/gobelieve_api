@@ -39,10 +39,12 @@ def login(uid):
     return obj["data"]["token"]
 
 
-access_token = login(13635273143)
-print "token:", access_token
 
-def TestGroup():
+
+def TestClientGroup():
+    access_token = login(13635273143)
+    print "token:", access_token
+    
     headers = {}
     headers["Authorization"] = "Bearer " + access_token
     headers["Content-Type"] = "application/json"
@@ -61,6 +63,20 @@ def TestGroup():
     assert(r.status_code == 200)
     print "update group name success"
 
+    url = URL + "/client/groups/%s"%str(group_id)
+    r = requests.patch(url, data=json.dumps({"notice":"test notice"}), headers = headers)
+    assert(r.status_code == 200)
+    print "update group notice success"
+
+    url = URL + "/client/groups/%s/members/%s"%(str(group_id), 13635273143)
+    r = requests.patch(url, data=json.dumps({"nickname":"haha"}), headers = headers)
+    assert(r.status_code == 200)
+    print "update nickname in group success"
+
+    url = URL + "/client/groups/%s/members/%s"%(str(group_id), 13635273143)
+    r = requests.patch(url, data=json.dumps({"do_not_disturb":True}), headers = headers)
+    assert(r.status_code == 200)
+    print "update do not disturb success"
 
     url = URL + "/client/groups/%s"%str(group_id)
     r = requests.get(url, headers = headers)
@@ -116,8 +132,67 @@ def TestGroup():
 
     print "disband group success"
 
+    print "test client group completed"
+
+def TestGroup():
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    url = URL + "/groups"
+
+    group = {"master":13635273143,"members":[13635273143], "name":"test", "super":False}
+    r = requests.post(url, data=json.dumps(group), headers = headers)
+    assert(r.status_code == 200)
+    obj = json.loads(r.content)
+    group_id = obj["data"]["group_id"]
+    print "new group id:", group_id
+
+    url = URL + "/groups/%s"%str(group_id)
+    r = requests.patch(url, data=json.dumps({"name":"test_new"}), headers = headers)
+    assert(r.status_code == 200)
+    print "update group name success"
+
+    url = URL + "/groups/%s/upgrade"%str(group_id)
+    r = requests.post(url, headers = headers)
+    assert(r.status_code == 200)
+    print "upgrade group success"
+
+
+    url = URL + "/groups/%s/members"%str(group_id)
+    r = requests.post(url, data=json.dumps([13635273142]), headers = headers)
+    assert(r.status_code == 200)
+
+    print "add group member success"
+
+    url = URL + "/groups/%s/members"%str(group_id)
+    r = requests.post(url, data=json.dumps([13635273142]), headers = headers)
+    assert(r.status_code == 200)
+    print "repeat add group member success"
+
+
+    url = URL + "/groups/%s/members"%str(group_id)
+    r = requests.delete(url, headers = headers, data=json.dumps([13635273142]))
+
+    assert(r.status_code == 200)
+    print "remove group member success"
+
+
+    url = URL + "/groups/%s/members/13635273143"%str(group_id)
+    r = requests.delete(url, headers = headers)
+
+    assert(r.status_code == 200)
+
+    print "leave group success"
+
+    url = URL + "/groups/%s"%str(group_id)
+    r = requests.delete(url, headers = headers)
+
+    print "disband group success"
+
     print "test group completed"
 
 
-
 TestGroup()
+TestClientGroup()

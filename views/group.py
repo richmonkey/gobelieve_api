@@ -11,6 +11,7 @@ import time
 import umysql
 from authorization import require_application_or_person_auth
 from authorization import require_auth
+from authorization import require_application_auth
 from models.group_model import Group
 from models.user import User
 
@@ -72,53 +73,7 @@ def create_group():
     resp = {"data":{"group_id":gid}}
     return make_response(200, resp)
 
-#获取群名称,群成员,个人的群设置
-@app.route("/groups/<int:gid>", methods=["GET"])
-@require_auth
-def get_group(gid):
-    appid = request.appid
-    uid = request.uid
 
-    obj = Group.get_group(g._imdb, gid)
-    members = Group.get_group_members(g._imdb, gid)
-    for m in members:
-        name = User.get_user_name(g.rds, appid, uid)
-        m['name'] = name if name else ''
-    obj['members'] = members
-
-    q = User.get_user_notification_quiet(g.rds, appid, uid, gid)
-    obj['quiet'] = bool(q)
-
-    resp = {"data":obj}
-    return make_response(200, resp)
-
-
-#获取个人的所有群组
-@app.route("/groups", methods=["GET"])
-@require_auth
-def get_groups():
-    appid = request.appid
-    uid = request.uid
-
-    groups = Group.get_groups(g._imdb, appid, uid)
-    fields = request.args.get("fields", '')
-
-    fields = fields.split(",")
-    for obj in groups:
-        gid = obj['id']
-        if "members" in fields:
-            members = Group.get_group_members(g._imdb, gid)
-            for m in members:
-                name = User.get_user_name(g.rds, appid, uid)
-                m['name'] = name if name else ''
-            obj['members'] = members
-     
-        if "quiet" in fields:
-            q = User.get_user_notification_quiet(g.rds, appid, uid, gid)
-            obj['quiet'] = bool(q)
-        
-    resp = {"data":groups}
-    return make_response(200, resp)
 
 @app.route("/groups/<int:gid>", methods=["DELETE"])
 @require_application_or_person_auth
@@ -135,6 +90,36 @@ def delete_group(gid):
 
     content = "%d"%gid
     publish_message(g.rds, "group_disband", content)
+
+    resp = {"success":True}
+    return make_response(200, resp)
+
+
+
+@app.route("/groups/<int:gid>/upgrade", methods=["POST"])
+@require_application_auth
+def upgrade_group(gid):
+    """从普通群升级为超级群"""
+    appid = request.appid
+    group = Group.get_group(g._imdb, gid)
+
+    members = Group.get_group_members(g._imdb, gid)
+
+    if not group:
+        raise ResponseMeta(400, "group non exists")
+
+    Group.update_group_super(g._imdb, gid, 1)
+
+    content = "%d,%d,%d"%(gid, appid, 1)
+    publish_message(g.rds, "group_upgrade", content)
+
+    v = {
+        "group_id":gid,
+        "timestamp":int(time.time()),
+        "super":1
+    }
+    op = {"upgrade":v}
+    send_group_notification(appid, gid, op, None)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -246,26 +231,6 @@ def delete_group_member(gid):
 
     for memberid in members:
         remove_group_member(appid, gid, memberid)
-
-    resp = {"success":True}
-    return make_response(200, resp)
-
-
-@app.route("/groups/<int:gid>/members/<int:memberid>", methods=["PATCH"])
-@require_auth
-def group_member_setting(gid, memberid):
-    appid = request.appid
-    uid = request.uid
-
-    if uid != memberid:
-        raise ResponseMeta(400, "setting other is forbidden")
-
-    obj = json.loads(request.data)
-    if obj.has_key('quiet'):
-        #免打扰
-        User.set_user_notification_quiet(g.rds, appid, uid, gid, obj['quiet'])
-    else:
-        raise ResponseMeta(400, "no action")
 
     resp = {"success":True}
     return make_response(200, resp)

@@ -78,12 +78,15 @@ def get_group(gid):
     obj = Group.get_group(g._imdb, gid)
     members = Group.get_group_members(g._imdb, gid)
     for m in members:
-        name = User.get_user_name(g.rds, appid, uid)
+        name = User.get_user_name(g.rds, appid, m['uid'])
         m['name'] = name if name else ''
+        if not m.get('nickname'):
+            m['nickname'] = ""
+        
     obj['members'] = members
 
-    q = User.get_user_notification_quiet(g.rds, appid, uid, gid)
-    obj['quiet'] = bool(q)
+    q = User.get_group_do_not_disturb(g.rds, appid, uid, gid)
+    obj['do_not_disturb'] = bool(q)
 
     resp = {"data":obj}
     return make_response(200, resp)
@@ -105,13 +108,16 @@ def get_groups():
         if "members" in fields:
             members = Group.get_group_members(g._imdb, gid)
             for m in members:
-                name = User.get_user_name(g.rds, appid, uid)
+                name = User.get_user_name(g.rds, appid, m['uid'])
                 m['name'] = name if name else ''
+                if not m.get('nickname'):
+                    m['nickname'] = ""
+                    
             obj['members'] = members
      
         if "quiet" in fields:
-            q = User.get_user_notification_quiet(g.rds, appid, uid, gid)
-            obj['quiet'] = bool(q)
+            q = User.get_group_do_not_disturb(g.rds, appid, uid, gid)
+            obj['do_not_disturb'] = bool(q)
         
     resp = {"data":groups}
     return make_response(200, resp)
@@ -147,18 +153,34 @@ def delete_group(gid):
 def update_group(gid):
     appid = request.appid
     obj = json.loads(request.data)
-    name = obj["name"]
-    Group.update_group_name(g._imdb, gid, name)
 
-    v = {
-        "group_id":gid,
-        "timestamp":int(time.time()),
-        "name":name
-    }
-    op = {"update_name":v}
-    send_group_notification(appid, gid, op, None)
+    if obj.has_key('name'):
+        name = obj["name"]
+        Group.update_group_name(g._imdb, gid, name)
+         
+        v = {
+            "group_id":gid,
+            "timestamp":int(time.time()),
+            "name":name
+        }
+        op = {"update_name":v}
+        send_group_notification(appid, gid, op, None)
+    elif obj.has_key('notice'):
+        notice = obj["notice"]
+        Group.update_group_notice(g._imdb, gid, notice)
+        v = {
+            "group_id":gid,
+            "timestamp":int(time.time()),
+            "name":notice
+        }
+        op = {"update_notice":v}
+        send_group_notification(appid, gid, op, None)
+    else:
+        raise ResponseMeta(400, "patch nothing")
+    
+    resp = {"success":True}
+    return make_response(200, resp)
 
-    return ""
 
 @app.route("/groups/<int:gid>/members", methods=["POST"])
 @require_auth
@@ -269,7 +291,6 @@ def delete_group_member(gid):
     resp = {"success":True}
     return make_response(200, resp)
 
-
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["PATCH"])
 @require_auth
 def group_member_setting(gid, memberid):
@@ -281,8 +302,19 @@ def group_member_setting(gid, memberid):
 
     obj = json.loads(request.data)
     if obj.has_key('quiet'):
-        #免打扰
-        User.set_user_notification_quiet(g.rds, appid, uid, gid, obj['quiet'])
+        User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['quiet'])
+    elif obj.has_key('do_not_disturb'):
+        User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
+    elif obj.has_key('nickname'):
+        Group.update_nickname(g._imdb, gid, uid, obj['nickname'])
+        v = {
+            "group_id":gid,
+            "timestamp":int(time.time()),
+            "nickname":obj['nickname'],
+            "member_id":uid
+        }
+        op = {"update_member_nickname":v}
+        send_group_notification(appid, gid, op, None)        
     else:
         raise ResponseMeta(400, "no action")
 
