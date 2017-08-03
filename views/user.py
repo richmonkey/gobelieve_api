@@ -61,15 +61,6 @@ def grant_auth_token():
     key = hmac(u, realm, token)
     User.set_turn_key(rds, appid, uid, key)
     User.set_turn_password(rds, appid, uid, token)
-
-    if obj.has_key("platform_id") and obj.has_key("device_id"):
-        platform_id = obj['platform_id']
-        device_id = obj['device_id']
-        s = init_message_queue(appid, uid, platform_id, device_id)
-        if s:
-            logging.error("init message queue success")
-        else:
-            logging.error("init message queue fail")
         
     data = {"data":{"token":token}}
     return make_response(200, data)
