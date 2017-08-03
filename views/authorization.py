@@ -32,7 +32,8 @@ class AccessToken(object):
         return self._load(rds, key)
 
 def INVALID_ACCESS_TOKEN():
-    e = {"error":"非法的access token"}
+    meta = {"message":"非法的access token", "code":400}
+    e = {"error":"非法的access token", "meta":meta}
     logging.warn("非法的access token")
     return make_response(400, e)
 
