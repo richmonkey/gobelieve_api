@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import redis
 
 class Group(object):
     #外部指定groupid
@@ -112,3 +113,41 @@ class Group(object):
         sql = "SELECT g.id, g.appid, g.master, g.super, g.name, COALESCE(g.notice, '') as notice FROM `group_member`, `group` as g WHERE group_member.uid=%s AND group_member.group_id=g.id AND g.appid=%s"
         cursor = db.execute(sql, (uid, appid))
         return list(cursor.fetchall())
+
+
+    
+    #groups_actions_id 每个操作的序号，自增
+    #groups_actions 记录之前的action ID 和当前的action ID 格式："prev_id:id"
+    @staticmethod
+    def publish_message(rds, channel, msg):
+        with rds.pipeline() as pipe:
+            while True:
+                try:
+                    pipe.watch("groups_actions_id")
+                    pipe.watch("groups_actions")
+                    action_id = pipe.get("groups_actions_id")
+                    action_id = int(action_id) if action_id else 0
+                    action_id = action_id + 1
+                    
+                    group_actions = pipe.get("groups_actions")
+                    prev_id = 0
+                    if group_actions:
+                        _, prev_id = group_actions.split(":")
+                    
+                    pipe.multi()
+                    
+                    pipe.set("groups_actions_id", action_id)
+                    
+                    group_actions = "%s:%s"%(prev_id, action_id)
+                    pipe.set("groups_actions", group_actions)
+     
+                    m = "%s:%s"%(group_actions, msg)
+                    pipe.publish(channel, m)
+                    
+                    pipe.execute()
+                    logging.info("publish msg:%s actions:%s", msg, group_actions)
+                    break
+                except redis.WatchError, e:
+                    logging.info("watch err:%s", e)
+        
+   

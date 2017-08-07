@@ -9,6 +9,7 @@ import logging
 import json
 import time
 import umysql
+import redis
 from authorization import require_application_or_person_auth
 from authorization import require_auth
 from models.group_model import Group
@@ -23,10 +24,8 @@ app = Blueprint('c_group', __name__, url_prefix="/client")
 im_url=config.IM_RPC_URL
 
 
-def publish_message(rds, channel, msg):
-    rds.publish(channel, msg)
+publish_message = Group.publish_message
 
-        
 @app.route("/groups", methods=["POST"])
 @require_auth
 def create_group():

@@ -24,9 +24,7 @@ app = Blueprint('group', __name__)
 im_url=config.IM_RPC_URL
 
 
-def publish_message(rds, channel, msg):
-    rds.publish(channel, msg)
-
+publish_message = Group.publish_message
         
 @app.route("/groups", methods=["POST"])
 @require_application_or_person_auth
