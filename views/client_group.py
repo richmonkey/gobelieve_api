@@ -43,7 +43,7 @@ def create_group():
     #[{uid:"", name:"", avatar:"可选"}, ...]
     memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
             
-    gid = Group.create_group(g._imdb, appid, master, name, 
+    gid = Group.create_group(g._db, appid, master, name, 
                              is_super, memberIDs)
     
     s = 1 if is_super else 0
@@ -74,8 +74,8 @@ def get_group(gid):
     appid = request.appid
     uid = request.uid
 
-    obj = Group.get_group(g._imdb, gid)
-    members = Group.get_group_members(g._imdb, gid)
+    obj = Group.get_group(g._db, gid)
+    members = Group.get_group_members(g._db, gid)
     for m in members:
         name = User.get_user_name(g.rds, appid, m['uid'])
         m['name'] = name if name else ''
@@ -98,14 +98,14 @@ def get_groups():
     appid = request.appid
     uid = request.uid
 
-    groups = Group.get_groups(g._imdb, appid, uid)
+    groups = Group.get_groups(g._db, appid, uid)
     fields = request.args.get("fields", '')
 
     fields = fields.split(",")
     for obj in groups:
         gid = obj['id']
         if "members" in fields:
-            members = Group.get_group_members(g._imdb, gid)
+            members = Group.get_group_members(g._db, gid)
             for m in members:
                 name = User.get_user_name(g.rds, appid, m['uid'])
                 m['name'] = name if name else ''
@@ -127,11 +127,11 @@ def delete_group(gid):
     appid = request.appid
 
     #群组管理员有权限解散群
-    master = Group.get_group_master(g._imdb, gid)
+    master = Group.get_group_master(g._db, gid)
     if master != request.uid:
         raise ResponseMeta(400, "no authority")
     
-    Group.disband_group(g._imdb, gid)
+    Group.disband_group(g._db, gid)
 
     v = {
         "group_id":gid,
@@ -155,7 +155,7 @@ def update_group(gid):
 
     if obj.has_key('name'):
         name = obj["name"]
-        Group.update_group_name(g._imdb, gid, name)
+        Group.update_group_name(g._db, gid, name)
          
         v = {
             "group_id":gid,
@@ -166,7 +166,7 @@ def update_group(gid):
         send_group_notification(appid, gid, op, None)
     elif obj.has_key('notice'):
         notice = obj["notice"]
-        Group.update_group_notice(g._imdb, gid, notice)
+        Group.update_group_notice(g._db, gid, notice)
         v = {
             "group_id":gid,
             "timestamp":int(time.time()),
@@ -197,16 +197,16 @@ def add_group_member(gid):
     #支持members参数为对象数组
     memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
     
-    g._imdb.begin()
+    g._db.begin()
     for member_id in memberIDs:
         try:
-            Group.add_group_member(g._imdb, gid, member_id)
+            Group.add_group_member(g._db, gid, member_id)
         except umysql.SQLError, e:
             #1062 duplicate member
             if e[0] != 1062:
                 raise
 
-    g._imdb.commit()
+    g._db.commit()
 
     for m in members:
         member_id = m['uid'] if type(m) == dict else m
@@ -232,7 +232,7 @@ def add_group_member(gid):
 
 def remove_group_member(appid, gid, member):
     memberid = member['uid']
-    Group.delete_group_member(g._imdb, gid, memberid)
+    Group.delete_group_member(g._db, gid, memberid)
          
     v = {
         "group_id":gid,
@@ -270,7 +270,7 @@ def delete_group_member(gid):
     appid = request.appid
 
     #群组管理员有权限删除群成员
-    master = Group.get_group_master(g._imdb, gid)
+    master = Group.get_group_master(g._db, gid)
     if master != request.uid:
         raise ResponseMeta(400, "no authority")
 
@@ -305,7 +305,7 @@ def group_member_setting(gid, memberid):
     elif obj.has_key('do_not_disturb'):
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
     elif obj.has_key('nickname'):
-        Group.update_nickname(g._imdb, gid, uid, obj['nickname'])
+        Group.update_nickname(g._db, gid, uid, obj['nickname'])
         v = {
             "group_id":gid,
             "timestamp":int(time.time()),

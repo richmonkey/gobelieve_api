@@ -33,14 +33,9 @@ def before_request():
     g.rds= rds
 
     cnf = config.MYSQL
-    imcnf = config.MYSQL_IM
     db = getattr(g, '_db', None)    
     if db is None:
         g._db = Mysql(*cnf)
-
-    imdb = getattr(g, '_imdb', None)
-    if imdb is None:
-        g._imdb = Mysql(*imcnf)
 
 def app_teardown(exception):
     logging.debug('app_teardown')
@@ -49,14 +44,6 @@ def app_teardown(exception):
         db = getattr(g, '_db', None)
         if db:
             db.close()
-        imdb = getattr(g, '_imdb', None)
-        if imdb:
-            imdb.close()
-
-        mysql_instances = getattr(g, '_mysql_instances', None)
-        if mysql_instances is not None:
-            for mysql in mysql_instances.values():
-                mysql.close()
     except Exception:
         pass
 

@@ -44,10 +44,10 @@ def create_group():
         gid = obj['group_id'] if obj.has_key('group_id') else 0
 
     if gid > 0:
-        gid = Group.create_group_ext(g._imdb, gid, appid, master, name, 
+        gid = Group.create_group_ext(g._db, gid, appid, master, name, 
                                      is_super, members)
     else:
-        gid = Group.create_group(g._imdb, appid, master, name, 
+        gid = Group.create_group(g._db, appid, master, name, 
                                  is_super, members)
     
     s = 1 if is_super else 0
@@ -77,7 +77,7 @@ def create_group():
 @require_application_or_person_auth
 def delete_group(gid):
     appid = request.appid
-    Group.disband_group(g._imdb, gid)
+    Group.disband_group(g._db, gid)
 
     v = {
         "group_id":gid,
@@ -99,14 +99,14 @@ def delete_group(gid):
 def upgrade_group(gid):
     """从普通群升级为超级群"""
     appid = request.appid
-    group = Group.get_group(g._imdb, gid)
+    group = Group.get_group(g._db, gid)
 
-    members = Group.get_group_members(g._imdb, gid)
+    members = Group.get_group_members(g._db, gid)
 
     if not group:
         raise ResponseMeta(400, "group non exists")
 
-    Group.update_group_super(g._imdb, gid, 1)
+    Group.update_group_super(g._db, gid, 1)
 
     content = "%d,%d,%d"%(gid, appid, 1)
     publish_message(g.rds, "group_upgrade", content)
@@ -129,7 +129,7 @@ def update_group(gid):
     appid = request.appid
     obj = json.loads(request.data)
     name = obj["name"]
-    Group.update_group_name(g._imdb, gid, name)
+    Group.update_group_name(g._db, gid, name)
 
     v = {
         "group_id":gid,
@@ -154,16 +154,16 @@ def add_group_member(gid):
     if len(members) == 0:
         return ""
 
-    g._imdb.begin()
+    g._db.begin()
     for member_id in members:
         try:
-            Group.add_group_member(g._imdb, gid, member_id)
+            Group.add_group_member(g._db, gid, member_id)
         except umysql.SQLError, e:
             #1062 duplicate member
             if e[0] != 1062:
                 raise
 
-    g._imdb.commit()
+    g._db.commit()
 
     for member_id in members:
         v = {
@@ -182,7 +182,7 @@ def add_group_member(gid):
 
 
 def remove_group_member(appid, gid, memberid):
-    Group.delete_group_member(g._imdb, gid, memberid)
+    Group.delete_group_member(g._db, gid, memberid)
          
     v = {
         "group_id":gid,
@@ -202,7 +202,7 @@ def leave_group_member(gid, memberid):
     if hasattr(request, "uid") and request.uid > 0:
         #群组管理员或者成员本身有权限退出群
         if memberid != request.uid:
-            master = Group.get_group_master(g._imdb, gid)
+            master = Group.get_group_master(g._db, gid)
             if master != request.uid:
                 raise ResponseMeta(400, "no authority")
 
@@ -219,7 +219,7 @@ def delete_group_member(gid):
     appid = request.appid
     if hasattr(request, "uid") and request.uid > 0:
         #群组管理员或者成员本身有权限退出群
-        master = Group.get_group_master(g._imdb, gid)
+        master = Group.get_group_master(g._db, gid)
         if master != request.uid:
             raise ResponseMeta(400, "no authority")
 
