@@ -95,6 +95,17 @@ def TestAudio():
     assert(r.status_code == 200)
     print "mp3 len:", len(r.content)
 
+def TestFile():
+    url = URL + "/files"
+
+    files = {'file': ('test.amr', open('data/test.amr', 'rb'), "application/plain")}
+    headers = {}
+    headers["Authorization"] = "Bearer " + access_token
+    r = requests.post(url, headers=headers, files=files)
+    print r.status_code, r.content
+
+    
+    
 def send_message(sender, receiver, content):
     url = URL + "/messages/peers"
 
@@ -278,7 +289,7 @@ def login(uid):
 access_token = login(1)
 print "token:", access_token
 
-
+TestFile()
 TestFormImage()
 TestFormAudio()
 TestImage()

@@ -16,6 +16,7 @@ import redis
 
 from views import image
 from views import audio
+from views import file
 from views import user
 from views import notification
 from views import customer
@@ -96,6 +97,7 @@ def init_app(app):
 
     app.register_blueprint(image.app)
     app.register_blueprint(audio.app)
+    app.register_blueprint(file.app)
     app.register_blueprint(client_group.app)
     app.register_blueprint(notification.app)
     app.register_blueprint(customer.app)
