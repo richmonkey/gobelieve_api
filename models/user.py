@@ -63,7 +63,8 @@ class User(object):
         return True
 
     @staticmethod
-    def save_user_device_token(rds, appid, uid, device_token, 
+    def save_user_device_token(rds, appid, uid,
+                               device_token, pushkit_device_token,
                                ng_device_token, xg_device_token,
                                xm_device_token, hw_device_token,
                                gcm_device_token, jp_device_token):
@@ -74,6 +75,13 @@ class User(object):
             obj = {
                 "apns_device_token":device_token,
                 "apns_timestamp":now
+            }
+            rds.hmset(key, obj)
+
+        if pushkit_device_token:
+            obj = {
+                "pushkit_device_token":pushkit_device_token,
+                "pushkit_timestamp":now
             }
             rds.hmset(key, obj)
             
@@ -124,7 +132,8 @@ class User(object):
 
     #重置(清空)用户已经绑定的devicetoken
     @staticmethod
-    def reset_user_device_token(rds, appid, uid, device_token, 
+    def reset_user_device_token(rds, appid, uid,
+                                device_token, pushkit_device_token,
                                 ng_device_token, xg_device_token, 
                                 xm_device_token, hw_device_token, 
                                 gcm_device_token, jp_device_token):
@@ -135,6 +144,12 @@ class User(object):
                 return False
             rds.hdel(key, "apns_device_token")
 
+        if pushkit_device_token:
+            t = rds.hget(key, "pushkit_device_token")
+            if pushkit_device_token != t:
+                return False
+            rds.hdel(key, "pushkit_device_token")
+            
         if ng_device_token:
             t = rds.hget(key, "ng_device_token")
             if ng_device_token != t:

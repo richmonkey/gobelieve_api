@@ -22,6 +22,7 @@ APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 #URL = "http://api.gobelieve.io"
 URL = "http://dev.api.gobelieve.io"
 
+
 #表单上传图片
 def TestFormImage():
     url = URL + "/v2/images"
@@ -149,7 +150,8 @@ def TestDeviceToken():
         #"hw_device_token":"08650300127619392000000630000001",
         #"apns_device_token":"177bbe6da89125b84bfad60ff3d729005792fad4ebbbf5729a8cecc79365a218",
         #"gcm_device_token":"fNMMmCwoba0:APA91bGqpKqwMvbxNlAcGj6wILQoCAY59wx3huFculEkUyElnidJvuEgwVVFuD3PKBUoLIop8ivJlXlkJNPYfFAnabHPAn8_o4oeX1b8eIaOQLmVOkXY-sUw-QAY4MF9PG4RL3TDq7e6",
-        "jp_device_token":"111111",
+        #"jp_device_token":"111111",
+        #"pushkit_device_token":"144c67f2fde4b72de8ed4203e9672c064e12376ed340d55f8e04430e15ad5a47"
     }
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
@@ -157,7 +159,7 @@ def TestDeviceToken():
     content = json.dumps({"text":"test"})
     send_message(2000, 1000, content)
     time.sleep(1)
-
+    
     url = URL + "/device/unbind"
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
@@ -289,15 +291,15 @@ def login(uid):
 access_token = login(1)
 print "token:", access_token
 
-TestFile()
-TestFormImage()
-TestFormAudio()
-TestImage()
-TestAudio()
-TestDeviceToken()
-TestRoomMessage()
-TestForbidden()
-TestGroupNotification()
-TestCustomerRegister()
-TestGetOfflineCount()
+#TestFile()
+#TestFormImage()
+#TestFormAudio()
+#TestImage()
+#TestAudio()
+#TestDeviceToken()
+#TestRoomMessage()
+#TestForbidden()
+#TestGroupNotification()
+#TestCustomerRegister()
+#TestGetOfflineCount()
 
