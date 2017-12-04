@@ -170,7 +170,7 @@ def update_group(gid):
         v = {
             "group_id":gid,
             "timestamp":int(time.time()),
-            "name":notice
+            "notice":notice
         }
         op = {"update_notice":v}
         send_group_notification(appid, gid, op, None)
