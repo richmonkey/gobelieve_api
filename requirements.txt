@@ -1,7 +1,10 @@
-Flask=1.0.2
+Flask==1.0.2
 redis>=2.10.0
 umysql==2.61
 requests==2.8.1
 uWSGI==2.0.17
 gevent==1.2.2
-gunicorn=19.8.1
+gunicorn==19.8.1
+pillow
+requests
+supervisor

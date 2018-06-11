@@ -90,8 +90,9 @@ def init_app(app):
     app.teardown_appcontext(app_teardown)
     app.before_request(before_request)
 
-    for error in range(400, 420) + range(500, 506):
-        app.error_handler_spec[None][error] = http_error_handler
+    for error in range(400, 402) + range(403, 407) + range(408, 419) + range(500, 506):
+        app.register_error_handler(error, http_error_handler)
+
     app.register_error_handler(ResponseMeta, response_meta_handler)
     app.register_error_handler(Exception, generic_error_handler)
 
