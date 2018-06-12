@@ -91,7 +91,7 @@ HTTP 接口返回值结构
            "master":"管理员id(整型)",
            "name":"群主题名",
            "super":"超级群(布尔类型,可选)"
-           "members":["uid",...]
+           "members":[{"uid":"群成员id", "name":"群组成员名", "avatar":"群组成员头像"},...]
         }
 
 
