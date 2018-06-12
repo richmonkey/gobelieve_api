@@ -65,9 +65,9 @@ def grant_auth_token():
     data = {"data":{"token":token}}
     return make_response(200, data)
 
-@app.route("/users/<int:uid>", methods=["POST"])
+@app.route("/users/<int:uid>", methods=["POST", "PATCH"])
 @require_application_auth
-def set_user_name(uid):
+def user_setting(uid):
     rds = g.rds
     appid = request.appid
     obj = json.loads(request.data)
@@ -80,6 +80,13 @@ def set_user_name(uid):
         User.set_user_forbidden(rds, appid, uid, fb)
         content = "%d,%d,%d"%(appid, uid, fb)
         publish_message(rds, "speak_forbidden", content)
+    elif obj.has_key("do_not_disturb"):
+        contact_id = obj['do_not_disturb']['peer_uid']
+        on = obj['do_not_disturb']['on']
+        User.set_user_do_not_disturb(g.rds, appid, uid,
+                                        contact_id, on)
+    elif obj.has_key("mute"):
+        User.set_mute(rds, appid, uid, obj["mute"])
     else:
         raise ResponseMeta(400, "invalid param")
 

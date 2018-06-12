@@ -9,8 +9,6 @@ import logging
 import json
 import time
 import umysql
-from authorization import require_application_or_person_auth
-from authorization import require_auth
 from authorization import require_application_auth
 from models.group_model import Group
 from models.user import User
@@ -21,13 +19,10 @@ from rpc import send_group_notification
 
 app = Blueprint('group', __name__)
 
-im_url=config.IM_RPC_URL
-
-
 publish_message = Group.publish_message
         
 @app.route("/groups", methods=["POST"])
-@require_application_or_person_auth
+@require_application_auth
 def create_group():
     appid = request.appid
     obj = json.loads(request.data)
@@ -43,18 +38,22 @@ def create_group():
     if config.EXTERNAL_GROUP_ID:
         gid = obj['group_id'] if obj.has_key('group_id') else 0
 
+    #支持members参数为对象数组
+    #[{uid:"", name:"", avatar:"可选"}, ...]
+    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    
     if gid > 0:
         gid = Group.create_group_ext(g._db, gid, appid, master, name, 
-                                     is_super, members)
+                                     is_super, memberIDs)
     else:
         gid = Group.create_group(g._db, appid, master, name, 
-                                 is_super, members)
+                                 is_super, memberIDs)
     
     s = 1 if is_super else 0
     content = "%d,%d,%d"%(gid, appid, s)
     publish_message(g.rds, "group_create", content)
     
-    for mem in members:
+    for mem in memberIDs:
         content = "%d,%d"%(gid, mem)
         publish_message(g.rds, "group_member_add", content)
     
@@ -74,7 +73,7 @@ def create_group():
 
 
 @app.route("/groups/<int:gid>", methods=["DELETE"])
-@require_application_or_person_auth
+@require_application_auth
 def delete_group(gid):
     appid = request.appid
     Group.disband_group(g._db, gid)
@@ -124,7 +123,7 @@ def upgrade_group(gid):
 
 
 @app.route("/groups/<int:gid>", methods=["PATCH"])
-@require_application_or_person_auth
+@require_application_auth
 def update_group(gid):
     appid = request.appid
     obj = json.loads(request.data)
@@ -142,20 +141,23 @@ def update_group(gid):
     return ""
 
 @app.route("/groups/<int:gid>/members", methods=["POST"])
-@require_application_or_person_auth
+@require_application_auth
 def add_group_member(gid):
     appid = request.appid
     obj = json.loads(request.data)
     if type(obj) is dict:
-        members = [obj["uid"]]
+        members = [obj]
     else:
         members = obj
 
     if len(members) == 0:
         return ""
 
+    #支持members参数为对象数组
+    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    
     g._db.begin()
-    for member_id in members:
+    for member_id in memberIDs:
         try:
             Group.add_group_member(g._db, gid, member_id)
         except umysql.SQLError, e:
@@ -165,12 +167,18 @@ def add_group_member(gid):
 
     g._db.commit()
 
-    for member_id in members:
+    for m in members:
+        member_id = m['uid'] if type(m) == dict else m
         v = {
             "group_id":gid,
             "member_id":member_id,
             "timestamp":int(time.time())
         }
+        if type(m) == dict and m.get('name'):
+            v['name'] = m['name']
+        if type(m) == dict and m.get('avatar'):
+            v['avatar'] = m['avatar']
+        
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
          
@@ -181,7 +189,8 @@ def add_group_member(gid):
     return make_response(200, resp)
 
 
-def remove_group_member(appid, gid, memberid):
+def remove_group_member(appid, gid, member):
+    memberid = member['uid']    
     Group.delete_group_member(g._db, gid, memberid)
          
     v = {
@@ -189,6 +198,11 @@ def remove_group_member(appid, gid, memberid):
         "member_id":memberid,
         "timestamp":int(time.time())
     }
+    if member.get('name'):
+        v['name'] = member['name']
+    if member.get('avatar'):
+        v['avatar'] = member['avatar']
+    
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
      
@@ -196,7 +210,7 @@ def remove_group_member(appid, gid, memberid):
     publish_message(g.rds, "group_member_remove", content)
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
-@require_application_or_person_auth
+@require_application_auth
 def leave_group_member(gid, memberid):
     appid = request.appid
     if hasattr(request, "uid") and request.uid > 0:
@@ -207,14 +221,14 @@ def leave_group_member(gid, memberid):
                 raise ResponseMeta(400, "no authority")
 
 
-    remove_group_member(appid, gid, memberid)
+    remove_group_member(appid, gid, {"uid":memberid})
 
     resp = {"success":True}
     return make_response(200, resp)
 
 
 @app.route("/groups/<int:gid>/members", methods=["DELETE"])
-@require_application_or_person_auth
+@require_application_auth
 def delete_group_member(gid):
     appid = request.appid
     if hasattr(request, "uid") and request.uid > 0:
@@ -227,8 +241,39 @@ def delete_group_member(gid):
     if len(members) == 0:
         raise ResponseMeta(400, "no memebers to delete")
 
-    for memberid in members:
-        remove_group_member(appid, gid, memberid)
+    for m in members:
+        if type(m) == int:
+            member = {"uid":m}
+        else:
+            member = m
+            
+        remove_group_member(appid, gid, member)
+
+    resp = {"success":True}
+    return make_response(200, resp)
+
+
+@app.route("/groups/<int:gid>/members/<int:memberid>", methods=["PATCH"])
+@require_application_auth
+def group_member_setting(gid, memberid):
+    appid = request.appid
+    uid = memberid
+    
+    obj = json.loads(request.data)
+    if obj.has_key('do_not_disturb'):
+        User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
+    elif obj.has_key('nickname'):
+        Group.update_nickname(g._db, gid, uid, obj['nickname'])
+        v = {
+            "group_id":gid,
+            "timestamp":int(time.time()),
+            "nickname":obj['nickname'],
+            "member_id":uid
+        }
+        op = {"update_member_nickname":v}
+        send_group_notification(appid, gid, op, None)        
+    else:
+        raise ResponseMeta(400, "no action")
 
     resp = {"success":True}
     return make_response(200, resp)

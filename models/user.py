@@ -204,6 +204,19 @@ class User(object):
         key = "users_%d_%d"%(appid, uid)
         rds.hset(key, "forbidden", fb)
 
+    #pc在线时,手机静音设置
+    @staticmethod
+    def set_mute(rds, appid, uid, mute):
+        m = 1 if mute else 0
+        key = "users_%d_%d"%(appid, uid)
+        rds.hset(key, "mute", m)
+        
+        token = rds.hget(key, "access_token")
+        if token:
+            key2 = "access_token_%s"%token
+            on = 1 if not mute else 0
+            rds.hset(key2, "notification_on", on)
+        
     #个人消息免打扰设置
     @staticmethod
     def get_user_do_not_disturb(rds, appid, uid, peer_uid):

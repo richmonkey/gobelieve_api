@@ -21,6 +21,29 @@ APP_SECRET = '0WiCxAU1jh76SbgaaFC7qIaBPm2zkyM1'
 
 #URL = "http://api.gobelieve.io"
 URL = "http://dev.api.gobelieve.io"
+URL = "http://localhost:5000"
+
+
+
+#客户端接口
+
+
+
+def login(uid):
+    url = URL + "/auth/grant"
+    obj = {"uid":uid, "user_name":str(uid)}
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+     
+    res = requests.post(url, data=json.dumps(obj), headers=headers)
+    if res.status_code != 200:
+        print res.status_code, res.content
+        return None
+    obj = json.loads(res.text)
+    return obj["data"]["token"]
+
 
 
 #表单上传图片
@@ -97,6 +120,7 @@ def TestAudio():
     print "mp3 len:", len(r.content)
 
 def TestFile():
+    URL = "http://localhost:6000"    
     url = URL + "/files"
 
     files = {'file': ('test.amr', open('data/test.amr', 'rb'), "application/plain")}
@@ -164,6 +188,15 @@ def TestDeviceToken():
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
 
+
+
+
+
+
+#服务端接口
+
+
+
     
 def TestRoomMessage():
     url = URL + "/messages/rooms"
@@ -202,6 +235,7 @@ def TestGroupNotification():
     assert(r.status_code == 200)
     print "send group notification success"
 
+    
 
 def TestForbidden():
     uid = 1000
@@ -222,6 +256,54 @@ def TestForbidden():
     r = requests.post(url, data=json.dumps(data), headers=headers)
     assert(r.status_code == 200)
     print "set forbidden:0 success"
+
+
+def TestDoNotDisturb():
+    uid = 1000
+    url = URL + "/users/%s"%uid
+
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    data = {"do_not_disturb":{"peer_uid":100, "on":True}}
+
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "set do not disturb:1 success"
+
+    data = {"do_not_disturb":{"peer_uid":100, "on":False}}    
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "set do not disturb:0 success"
+
+
+
+#pc在线，手机静音选项
+def TestMute():
+    uid = 1000
+    url = URL + "/users/%s"%uid
+
+    secret = md5.new(APP_SECRET).digest().encode("hex")
+    basic = base64.b64encode(str(APP_ID) + ":" + secret)
+    headers = {'Content-Type': 'application/json; charset=UTF-8',
+               'Authorization': 'Basic ' + basic}
+
+    data = {"mute":True}
+
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "set mute:1 success"
+
+    data = {"mute":False}    
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    assert(r.status_code == 200)
+    print "set mute:0 success"
+
+    
+
+    
 
 def TestCustomerRegister():
     appid = 7
@@ -272,33 +354,26 @@ def TestGetOfflineCount():
     assert(r.status_code == 200)
 
 
-def login(uid):
-    url = URL + "/auth/grant"
-    obj = {"uid":uid, "user_name":str(uid)}
-    secret = md5.new(APP_SECRET).digest().encode("hex")
-    basic = base64.b64encode(str(APP_ID) + ":" + secret)
-    headers = {'Content-Type': 'application/json; charset=UTF-8',
-               'Authorization': 'Basic ' + basic}
-     
-    res = requests.post(url, data=json.dumps(obj), headers=headers)
-    if res.status_code != 200:
-        print res.status_code, res.content
-        return None
-    obj = json.loads(res.text)
-    return obj["data"]["token"]
 
 
-access_token = login(1)
-print "token:", access_token
 
+
+#access_token = login(1)
+#print "token:", access_token    
 #TestFile()
 #TestFormImage()
 #TestFormAudio()
 #TestImage()
 #TestAudio()
 #TestDeviceToken()
+
+
+
+
 #TestRoomMessage()
 #TestForbidden()
+#TestDoNotDisturb()
+TestMute()
 #TestGroupNotification()
 #TestCustomerRegister()
 #TestGetOfflineCount()

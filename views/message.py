@@ -101,7 +101,7 @@ def post_system_message():
         return flask.make_response(resp.content, resp.status_code)
     
 
-#发送系统消息
+#发送聊天室消息
 @app.route('/messages/rooms', methods=['POST'])
 @require_application_auth
 def post_room_message():
