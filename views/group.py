@@ -76,10 +76,15 @@ def create_group():
 @require_application_auth
 def delete_group(gid):
     appid = request.appid
-    Group.disband_group(g._db, gid)
 
+    group = Group.get_group(g._db, gid)
+    if not group:
+        raise ResponseMeta(400, "group non exists")
+    
+    Group.disband_group(g._db, gid)
     v = {
         "group_id":gid,
+        "group_name":group['name'],
         "timestamp":int(time.time())
     }
     op = {"disband":v}
@@ -112,6 +117,7 @@ def upgrade_group(gid):
 
     v = {
         "group_id":gid,
+        "group_name":group['name'],
         "timestamp":int(time.time()),
         "super":1
     }
@@ -153,6 +159,10 @@ def add_group_member(gid):
     if len(members) == 0:
         return ""
 
+    group = Group.get_group(g._db, gid)
+    if not group:
+        raise ResponseMeta(400, "group non exists")
+    
     #支持members参数为对象数组
     memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
     
@@ -171,6 +181,7 @@ def add_group_member(gid):
         member_id = m['uid'] if type(m) == dict else m
         v = {
             "group_id":gid,
+            "group_name":group['name'],
             "member_id":member_id,
             "timestamp":int(time.time())
         }
@@ -189,12 +200,13 @@ def add_group_member(gid):
     return make_response(200, resp)
 
 
-def remove_group_member(appid, gid, member):
+def remove_group_member(appid, gid, group_name, member):
     memberid = member['uid']    
     Group.delete_group_member(g._db, gid, memberid)
          
     v = {
         "group_id":gid,
+        "group_name":group_name,
         "member_id":memberid,
         "timestamp":int(time.time())
     }
@@ -213,16 +225,16 @@ def remove_group_member(appid, gid, member):
 @require_application_auth
 def leave_group_member(gid, memberid):
     appid = request.appid
-    if hasattr(request, "uid") and request.uid > 0:
-        #群组管理员或者成员本身有权限退出群
-        if memberid != request.uid:
-            master = Group.get_group_master(g._db, gid)
-            if master != request.uid:
-                raise ResponseMeta(400, "no authority")
+    group = Group.get_group(g._db, gid)
+    if not group:
+        raise ResponseMeta(400, "group non exists")
 
-
-    remove_group_member(appid, gid, {"uid":memberid})
-
+    name = User.get_user_name(g.rds, appid, memberid)
+    m = {"uid":memberid}
+    if name:
+        m['name'] = name
+    remove_group_member(appid, gid, group['name'], m)
+    
     resp = {"success":True}
     return make_response(200, resp)
 
@@ -231,23 +243,21 @@ def leave_group_member(gid, memberid):
 @require_application_auth
 def delete_group_member(gid):
     appid = request.appid
-    if hasattr(request, "uid") and request.uid > 0:
-        #群组管理员或者成员本身有权限退出群
-        master = Group.get_group_master(g._db, gid)
-        if master != request.uid:
-            raise ResponseMeta(400, "no authority")
-
     members = json.loads(request.data)
     if len(members) == 0:
         raise ResponseMeta(400, "no memebers to delete")
 
+    group = Group.get_group(g._db, gid)
+    if not group:
+        raise ResponseMeta(400, "group non exists")
+    
     for m in members:
         if type(m) == int:
             member = {"uid":m}
         else:
             member = m
             
-        remove_group_member(appid, gid, member)
+        remove_group_member(appid, gid, group['name'], member)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -258,6 +268,10 @@ def delete_group_member(gid):
 def group_member_setting(gid, memberid):
     appid = request.appid
     uid = memberid
+
+    group = Group.get_group(g._db, gid)
+    if not group:
+        raise ResponseMeta(400, "group non exists")
     
     obj = json.loads(request.data)
     if obj.has_key('do_not_disturb'):
@@ -266,6 +280,7 @@ def group_member_setting(gid, memberid):
         Group.update_nickname(g._db, gid, uid, obj['nickname'])
         v = {
             "group_id":gid,
+            "group_name":group['name'],
             "timestamp":int(time.time()),
             "nickname":obj['nickname'],
             "member_id":uid
