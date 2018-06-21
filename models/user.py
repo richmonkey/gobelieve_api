@@ -228,7 +228,7 @@ class User(object):
     def set_user_do_not_disturb(rds, appid, uid, peer_uid, do_not_disturb):
         key = "users_%s_%s"%(appid, uid)
         q = 1 if do_not_disturb else 0
-        rds.hset(key, "peer_%d"%peer_uid, do_not_disturb)
+        rds.hset(key, "peer_%d"%peer_uid, q)
         
         key = "users_%s_%s_peer_do_not_disturb"%(appid, uid)
         if do_not_disturb:
