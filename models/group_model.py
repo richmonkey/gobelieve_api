@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
 import redis
+import time
 
 class Group(object):
     #外部指定groupid
     @staticmethod
     def create_group_ext(db, group_id, appid, master, name, is_super, members):
+        now = int(time.time())
         db.begin()
         sql = "INSERT INTO `group`(id, appid, master, name, super) VALUES(%s, %s, %s, %s, %s)"
 
@@ -13,8 +15,8 @@ class Group(object):
         r = db.execute(sql, (group_id, appid, master, name, s))
 
         for m in members:
-            sql = "INSERT INTO group_member(group_id, uid) VALUES(%s, %s)"
-            db.execute(sql, (group_id, m))
+            sql = "INSERT INTO group_member(group_id, uid, timestamp) VALUES(%s, %s, %s)"
+            db.execute(sql, (group_id, m, now))
 
         db.commit()
         return group_id
@@ -22,6 +24,7 @@ class Group(object):
     #使用自增的groupid
     @staticmethod
     def create_group(db, appid, master, name, is_super, members):
+        now = int(time.time())
         db.begin()
         sql = "INSERT INTO `group`(appid, master, name, super) VALUES(%s, %s, %s, %s)"
 
@@ -30,8 +33,8 @@ class Group(object):
         group_id = r.lastrowid
         
         for m in members:
-            sql = "INSERT INTO group_member(group_id, uid) VALUES(%s, %s)"
-            db.execute(sql, (group_id, m))
+            sql = "INSERT INTO group_member(group_id, uid, timestamp) VALUES(%s, %s, %s)"
+            db.execute(sql, (group_id, m, now))
         
         db.commit()
         return group_id
@@ -69,8 +72,9 @@ class Group(object):
 
     @staticmethod
     def add_group_member(db, group_id, member_id):
-        sql = "INSERT INTO group_member(group_id, uid) VALUES(%s, %s)"
-        r = db.execute(sql, (group_id, member_id))
+        now = int(time.time())
+        sql = "INSERT INTO group_member(group_id, uid, timestamp) VALUES(%s, %s, %s)"
+        r = db.execute(sql, (group_id, member_id, now))
         logging.debug("insert rows:%s", r.rowcount)
 
     @staticmethod
