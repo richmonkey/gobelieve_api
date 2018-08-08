@@ -201,6 +201,8 @@ def add_group_member(gid):
     for member_id in memberIDs:
         try:
             Group.add_group_member(g._db, gid, member_id)
+            #可能是重新加入群
+            User.reset_group_synckey(g.rds, appid, member_id, gid)
         except umysql.SQLError, e:
             #1062 duplicate member
             if e[0] != 1062:

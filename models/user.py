@@ -257,6 +257,12 @@ class User(object):
             rds.srem(key, group_id)
 
     @staticmethod
+    def reset_group_synckey(rds, appid, uid, group_id):
+        key = "users_%s_%s"%(appid, uid)
+        field = "group_sync_key_%s"%group_id
+        rds.hdel(key, field)
+    
+    @staticmethod
     def add_user_count(rds, appid, uid):
         key = "statistics_users_%d"%appid
         rds.pfadd(key, uid)
