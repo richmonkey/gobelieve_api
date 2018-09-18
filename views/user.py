@@ -1,33 +1,20 @@
 # -*- coding: utf-8 -*-
-import config
-from urllib import urlencode
 from flask import request, Blueprint
-import flask
 from flask import g
-import logging
 import json
-import time
-import random
-from libs.crossdomain import crossdomain
+import hashlib
+import logging
 from libs.util import make_response
 from libs.util import create_access_token
 from libs.response_meta import ResponseMeta
-from authorization import require_application_or_person_auth
 from authorization import require_application_auth
-from authorization import require_auth
-from authorization import require_client_auth
 from models.user import User
-from models.app import App
-from models.customer import Customer
-from rpc import init_message_queue
-import hashlib
 
 app = Blueprint('user', __name__)
 
 
 def publish_message(rds, channel, msg):
     rds.publish(channel, msg)
-
 
 
 def saslprep(string):
@@ -40,15 +27,22 @@ def hmac(username, realm, password):
     return ha1(username, realm, password).encode('hex')
 
 
-
 @app.route("/auth/grant", methods=["POST"])
 @require_application_auth
 def grant_auth_token():
     rds = g.rds
     appid = request.appid
-    obj = json.loads(request.data)
-    uid = obj["uid"]
-    name = obj["user_name"] if obj.has_key("user_name") else ""
+    try:
+        obj = json.loads(request.data)
+    except ValueError, e:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
+    uid = obj.get('uid')
+    if type(uid) != int:
+        raise ResponseMeta(400, "invalid param")
+
+    name = obj.get('user_name', "")
     token = User.get_user_access_token(rds, appid, uid)
     if not token:
         token = create_access_token()
@@ -64,6 +58,7 @@ def grant_auth_token():
         
     data = {"data":{"token":token}}
     return make_response(200, data)
+
 
 @app.route("/users/<int:uid>", methods=["POST", "PATCH"])
 @require_application_auth
