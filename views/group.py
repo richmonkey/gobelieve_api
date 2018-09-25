@@ -146,31 +146,37 @@ def update_group(gid):
 
     return ""
 
+
 @app.route("/groups/<int:gid>/members", methods=["POST"])
 @require_application_auth
 def add_group_member(gid):
     appid = request.appid
     obj = json.loads(request.data)
+    inviter = None
     if type(obj) is dict:
-        members = [obj]
+        if 'members' in obj:
+            members = obj['members']
+            inviter = obj['inviter']
+        else:
+            members = [obj]
     else:
         members = obj
 
     if len(members) == 0:
         return ""
-
+    
     group = Group.get_group(g._db, gid)
     if not group:
         raise ResponseMeta(400, "group non exists")
     
-    #支持members参数为对象数组
+    # 支持members参数为对象数组
     memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
     
     g._db.begin()
     for member_id in memberIDs:
         try:
             Group.add_group_member(g._db, gid, member_id)
-            #可能是重新加入群
+            # 可能是重新加入群
             User.reset_group_synckey(g.rds, appid, member_id, gid)
         except umysql.SQLError, e:
             #1062 duplicate member
@@ -191,7 +197,9 @@ def add_group_member(gid):
             v['name'] = m['name']
         if type(m) == dict and m.get('avatar'):
             v['avatar'] = m['avatar']
-        
+        if inviter:
+            v['inviter'] = inviter
+
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
          

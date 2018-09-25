@@ -161,7 +161,7 @@ def TestGroup():
 
 
     url = URL + "/groups/%s/members"%str(group_id)
-    data = json.dumps([{"uid":13635273142, "name":"13635273142"}])        
+    data = json.dumps({"members":[{"uid":13635273142, "name":"13635273142"}], "inviter":{"uid":13635273143, "name":"haha"}})
     r = requests.post(url, data=data, headers = headers)
     assert(r.status_code == 200)
 
