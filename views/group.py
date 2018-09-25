@@ -156,7 +156,7 @@ def add_group_member(gid):
     if type(obj) is dict:
         if 'members' in obj:
             members = obj['members']
-            inviter = obj['inviter']
+            inviter = obj.get('inviter')
         else:
             members = [obj]
     else:
