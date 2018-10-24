@@ -209,7 +209,9 @@ HTTP 接口返回值结构
         {
             "do_not_disturb":"免打扰选项(布尔类型)",
         
-            "nickname":"群内昵称"
+            "nickname":"群内昵称",
+
+            "mute":"群内禁言"
         }
 
 

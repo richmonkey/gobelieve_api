@@ -174,7 +174,6 @@ def TestGroup():
     print "repeat add group member success"
 
 
-
     url = URL + "/groups/%s/members/%s"%(group_id, 13635273142)
     data = json.dumps({"do_not_disturb":True})
     r = requests.patch(url, data=data, headers = headers)
@@ -186,7 +185,19 @@ def TestGroup():
     data = json.dumps({"nickname":"nnnnn"})
     r = requests.patch(url, data=data, headers = headers)
     assert(r.status_code == 200)
-    print "set group do not disturb success"
+    print "set group member nickname disturb success"
+
+    url = URL + "/groups/%s/members/%s"%(group_id, 13635273142)
+    data = json.dumps({"mute":True})
+    r = requests.patch(url, data=data, headers = headers)
+    assert(r.status_code == 200)
+    print "set group member mute success"
+
+    url = URL + "/groups/%s/members/%s"%(group_id, 13635273142)
+    data = json.dumps({"mute":False})
+    r = requests.patch(url, data=data, headers = headers)
+    assert(r.status_code == 200)
+    print "set group member unmute success"
 
     
     url = URL + "/groups/%s/members"%str(group_id)

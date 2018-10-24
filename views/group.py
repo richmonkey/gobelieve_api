@@ -296,7 +296,12 @@ def group_member_setting(gid, memberid):
             "member_id":uid
         }
         op = {"update_member_nickname":v}
-        send_group_notification(appid, gid, op, None)        
+        send_group_notification(appid, gid, op, None)
+    elif obj.has_key('mute'):
+        mute = 1 if obj['mute'] else 0
+        Group.update_mute(g._db, gid, uid, mute)
+        content = "%d,%d,%d" % (gid, memberid, mute)
+        publish_message(g.rds, "group_member_mute", content)
     else:
         raise ResponseMeta(400, "no action")
 

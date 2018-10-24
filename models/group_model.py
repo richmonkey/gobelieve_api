@@ -96,6 +96,13 @@ class Group(object):
         logging.debug("update nickname rows:%s", r.rowcount)        
 
     @staticmethod
+    def update_mute(db, group_id, member_id, mute):
+        m = 1 if mute else 0
+        sql = "UPDATE `group_member` SET mute=%s WHERE group_id=%s AND uid=%s"
+        r = db.execute(sql, (m, group_id, member_id))
+        logging.debug("update mute rows:%s", r.rowcount)
+
+    @staticmethod
     def get_group_master(db, group_id):
         sql = "SELECT master FROM `group` WHERE id=%s"
         cursor = db.execute(sql, group_id)
