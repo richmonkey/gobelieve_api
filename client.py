@@ -17,7 +17,6 @@ import redis
 from views import image
 from views import audio
 from views import file
-from views import user
 from views import notification
 from views import customer
 from views import supporter
@@ -44,10 +43,11 @@ def before_request():
     LOGGER.debug("before request")
     g.rds = rds
 
-    cnf = config.MYSQL
     db = getattr(g, '_db', None)    
     if db is None:
-        g._db = Mysql(*cnf)
+        g._db = Mysql(config.MYSQL_HOST, config.MYSQL_USER, config.MYSQL_PASSWD,
+                   config.MYSQL_DATABASE, config.MYSQL_PORT,
+                   config.MYSQL_CHARSET, config.MYSQL_AUTOCOMMIT)
 
 def app_teardown(exception):
     LOGGER.debug('app_teardown')

@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 import config
-import requests
-from urllib import urlencode
 from flask import request, Blueprint
-import flask
 from flask import g
 import logging
+import pymysql
 import json
 import time
-import umysql
 from authorization import require_application_auth
 from models.group_model import Group
 from models.user import User
@@ -176,10 +173,10 @@ def add_group_member(gid):
     for member_id in memberIDs:
         try:
             Group.add_group_member(g._db, gid, member_id)
-            # 可能是重新加入群
             User.reset_group_synckey(g.rds, appid, member_id, gid)
-        except umysql.SQLError, e:
-            #1062 duplicate member
+        except pymysql.err.IntegrityError, e:
+            # 可能是重新加入群
+            # 1062 duplicate member
             if e[0] != 1062:
                 raise
 

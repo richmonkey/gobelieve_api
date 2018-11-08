@@ -32,10 +32,11 @@ def before_request():
     logging.debug("before request")
     g.rds= rds
 
-    cnf = config.MYSQL
-    db = getattr(g, '_db', None)    
+    db = getattr(g, '_db', None)
     if db is None:
-        g._db = Mysql(*cnf)
+        g._db = Mysql(config.MYSQL_HOST, config.MYSQL_USER, config.MYSQL_PASSWD,
+                   config.MYSQL_DATABASE, config.MYSQL_PORT,
+                   config.MYSQL_CHARSET, config.MYSQL_AUTOCOMMIT)
 
 def app_teardown(exception):
     logging.debug('app_teardown')
