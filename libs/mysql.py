@@ -56,7 +56,7 @@ class Mysql(object):
                                                         cursorclass=pymysql.cursors.DictCursor)
         return self._conn
 
-    def execute(self, sql, args=None):
+    def execute(self, sql, args=[]):
         evt = {
             'sql': sql,
             'args': args
