@@ -78,5 +78,6 @@ class Mysql(object):
         self.conn.rollback()
 
     def close(self):
-        self.conn.close()
+        if self._conn:        
+            self._conn.close()
 
