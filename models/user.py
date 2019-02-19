@@ -284,7 +284,14 @@ class User(object):
         store_id = int(store_id) if store_id else 0
         seller_id = int(seller_id) if seller_id else 0
         return store_id, seller_id
-    
+
+
+    @staticmethod
+    def set_turn_realm_key(rds, realm, u, key):
+        k = "turn/realm/%s/user/%s/key"%(realm, u)
+        rds.set(k, key)
+
+        
     @staticmethod
     def set_turn_password(rds, appid, uid, password):
         u = "%s_%s"%(appid, uid)
