@@ -54,8 +54,6 @@ def grant_auth_token():
     realm = "com.beetle.face"
     key = hmac(u, realm, token)
     User.set_turn_realm_key(rds, realm, u, key)
-    User.set_turn_key(rds, appid, uid, key)
-    User.set_turn_password(rds, appid, uid, token)
         
     data = {"data":{"token":token}}
     return make_response(200, data)

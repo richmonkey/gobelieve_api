@@ -290,17 +290,3 @@ class User(object):
     def set_turn_realm_key(rds, realm, u, key):
         k = "turn/realm/%s/user/%s/key"%(realm, u)
         rds.set(k, key)
-
-        
-    @staticmethod
-    def set_turn_password(rds, appid, uid, password):
-        u = "%s_%s"%(appid, uid)
-        key = "turn/user/%s/password"%u
-        rds.set(key, password)
-
-
-    @staticmethod
-    def set_turn_key(rds, appid, uid, key):
-        u = "%s_%s"%(appid, uid)
-        k = "turn/user/%s/key"%u
-        rds.set(k, key)
