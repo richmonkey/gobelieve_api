@@ -1,7 +1,6 @@
 import os
 from StringIO import StringIO
 from PIL import Image
-from fs import FS
 
 def parse_param(p):
     width = 0
@@ -100,7 +99,10 @@ def create_thumbnail(data, params):
         p = deflate_image(p, width, height)
 
     output = StringIO()
-    p.save(output, 'JPEG')
+    if p.mode == 'RGBA':
+        p.save(output, "PNG")
+    else:
+        p.save(output, 'JPEG')
     thumbnail = output.getvalue()
     return thumbnail
 
