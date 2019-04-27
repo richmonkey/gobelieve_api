@@ -38,6 +38,13 @@ HTTP 接口返回值结构
 - 请求地址: 所有可供第三方服务端访问的接口
 - 请求头部: Authorization: Basic $base64(appid:$hex_md5(appsecret))
 
+
+客户端授权
+
+- 请求地址: 所有可供客户端访问的接口
+- 请求头部: Authorization: Bearer $token
+
+
 ### 第三方应用获取永久有效的access token
 - 请求地址：** POST /auth/grant**
 - 是否认证：服务端授权
@@ -78,7 +85,7 @@ HTTP 接口返回值结构
   400 非法参数
 
 
-群组管理接口
+服务端群组管理接口
 ==========
 ### 创建群组
 - 请求地址：**POST /groups**
@@ -397,4 +404,164 @@ do_not_disturb和nickname一次只能设置一个选项
 
 - 操作失败：
   400 非法参数
+
+
+
+
+
+
+客户端群组管理接口
+==========
+### 创建群组
+- 请求地址：**POST /client/groups**
+- 是否认证：服务端授权
+- 请求头:Content-Type:application/json
+- 请求内容:
+
+
+        {
+           "master":"管理员id(整型)",
+           "name":"群主题名",
+           "super":"超级群(布尔类型,可选)"
+           "members":[{"uid":"群成员id", "name":"群组成员名", "avatar":"群组成员头像"},...]
+        }
+
+
+- 成功响应：200
+
+        {
+            "group_id":"群组id(整型)"
+        }
+
+
+- 操作失败:
+  400 非法的输入参数
+
+### 创建群组
+- 请求地址：**GET /client/groups?fields=members,quiet**
+- 是否认证：客户端授权
+
+
+
+- 成功响应：200
+
+        [
+            {
+                "id":"群组id(整型)",
+                "master":"管理员id",
+                "super":"超级群(1/0)",
+                "name":"群名",
+                "notice":"群公告",
+                "members":[
+                    "uid":"成员id",
+                    "name":"用户昵称",
+                    "nickname":"群内昵称",
+                ],
+                "do_not_disturb":"免打扰设置项"
+            }
+        ]
+
+
+
+
+### 修改群组名称
+- 请求地址：**PATCH /client/groups/{gid}**
+- 是否认证：客户端授权
+- 请求头:Content-Type:application/json
+- 请求内容:
+
+
+        {
+            "name":"群主题名",
+            "notice":"群公告",
+        }
+
+
+name和notice一次只能设置一个选项
+
+- 成功响应：200
+
+- 操作失败:
+  400 非法的输入参数
+
+
+### 解散群组
+- 请求地址：**DELETE /client/groups/{gid}**
+- 是否认证：客户端授权
+- 成功响应：200
+- 操作失败：
+  400 非法的群id
+
+### 添加群组成员
+- 请求地址：**POST /client/groups/{gid}/members**
+- 是否认证：客户端授权
+- 请求头:Content-Type:application/json
+- 请求内容:
+
+
+        {
+            "members":[
+                {
+                    "uid":"群成员id"
+                    "name":"群组成员名",
+                    "avatar":"群组成员头像"
+                },
+                ...
+            ],
+        }
+    
+
+- 成功响应：200
+- 操作失败：
+  400 非法的群成员id
+
+### 离开群
+- 请求地址：**DELETE /client/groups/{gid}/members/{mid}**
+- 是否认证：客户端授权
+- 成功响应：200
+- 操作失败：
+  400 非法参数
+
+
+### 移除群成员
+- 请求地址：**DELETE /client/groups/{gid}/members**
+- 是否认证：服务端授权
+- 请求头:Content-Type:application/json
+- 请求内容:
+
+         
+        [
+            {
+                "uid:", "群组成员id",
+                "name":"群组成员名",
+                "avatar":"群组成员头像"
+            },
+            ...
+        ]
+         
+- 成功响应：200
+- 操作失败：
+  400 非法参数
+
+
+### 群设置
+- 请求地址：**PATCH /client/groups/{gid}/members/{memberid}**
+- 是否认证：服务端授权
+- 请求头:Content-Type:application/json
+- 请求内容:
+
+        {
+            "do_not_disturb":"免打扰选项(布尔类型)",
+        
+            "nickname":"群内昵称",
+    
+        }
+
+
+do_not_disturb和nickname一次只能设置一个选项
+
+- 成功响应：200
+- 操作失败：
+  400 非法参数
+
 
