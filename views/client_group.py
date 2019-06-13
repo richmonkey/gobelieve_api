@@ -70,10 +70,13 @@ def get_group(gid):
     obj = Group.get_group(g._db, gid)
     members = Group.get_group_members(g._db, gid)
     for m in members:
-        name = User.get_user_name(g.rds, appid, m['uid'])
-        m['name'] = name if name else ''
-        if not m.get('nickname'):
-            m['nickname'] = ""
+        if m.get('nickname'):
+            m['nickname_in_group'] = m['nickname']
+            
+        name = User.get_user_name(g.rds, appid, m['uid'])            
+        m['name'] = name if name else ''            
+        m['avatar'] = ''            
+        m['nickname'] = name if name else ''            
         
     obj['members'] = members
 
@@ -100,10 +103,13 @@ def get_groups():
         if "members" in fields:
             members = Group.get_group_members(g._db, gid)
             for m in members:
-                name = User.get_user_name(g.rds, appid, m['uid'])
-                m['name'] = name if name else ''
-                if not m.get('nickname'):
-                    m['nickname'] = ""
+                if m.get('nickname'):
+                    m['nickname_in_group'] = m['nickname']
+            
+                name = User.get_user_name(g.rds, appid, m['uid'])            
+                m['name'] = name if name else ''            
+                m['avatar'] = ''            
+                m['nickname'] = name if name else ''
                     
             obj['members'] = members
      
