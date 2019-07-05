@@ -2,11 +2,11 @@
 from flask import request, Blueprint
 from libs.util import make_response
 from libs.fs import FS
-import md5
+import hashlib
 import json
 import os
 import logging
-from authorization import require_auth
+from .authorization import require_auth
 
 app = Blueprint('file', __name__)
 
@@ -28,7 +28,7 @@ def upload_file():
     if not data:
         return NO_CONTENT()
     
-    md5_value = md5.new(data).hexdigest()
+    md5_value = hashlib.md5(data).hexdigest()
     filename = md5_value + ext
     path = "/files/" + filename
     r = FS.upload(path, data)

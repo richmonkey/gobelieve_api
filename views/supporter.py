@@ -11,16 +11,15 @@ import random
 from libs.crossdomain import crossdomain
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
-from authorization import require_application_or_person_auth
-from authorization import require_application_auth
-from authorization import require_auth
-from authorization import require_client_auth
+from .authorization import require_application_or_person_auth
+from .authorization import require_application_auth
+from .authorization import require_auth
+from .authorization import require_client_auth
 from models.user import User
 from models.app import App
 from models.customer import Customer
 from models.seller import Seller
 from models.supporter import Supporter
-from rpc import init_message_queue
 from libs.util import make_json_response
 
 app = Blueprint('supporter', __name__)

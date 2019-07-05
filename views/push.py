@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import config
-from urllib import urlencode
+from urllib.parse import urlencode
 from flask import request, Blueprint
 import flask
 from flask import g
@@ -9,7 +9,7 @@ import json
 import time
 from libs.util import make_json_response
 from libs.response_meta import ResponseMeta
-from authorization import require_auth
+from .authorization import require_auth
 from models.user import User
 
 app = Blueprint('push', __name__)
@@ -21,7 +21,11 @@ def bind_device_token():
     rds = g.rds
     appid = request.appid
     uid = request.uid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
     device_token = obj.get("apns_device_token", "")
     pushkit_device_token = obj.get("pushkit_device_token", "")
     ng_device_token = obj.get("ng_device_token", "")
@@ -52,7 +56,10 @@ def unbind_device_token():
     rds = g.rds
     appid = request.appid
     uid = request.uid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
 
     device_token = obj.get("apns_device_token", "")
     pushkit_device_token = obj.get("pushkit_device_token", "")

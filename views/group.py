@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 import config
 import requests
-from urllib import urlencode
+from urllib.parse import urlencode
 from flask import request, Blueprint
 import flask
 from flask import g
 import logging
 import json
 import time
-import umysql
-from authorization import require_application_auth
+import pymysql
+from .authorization import require_application_auth
 from models.group_model import Group
 from models.user import User
 
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
-from rpc import send_group_notification
+from .rpc import send_group_notification
 
 app = Blueprint('group', __name__)
 
@@ -25,7 +25,11 @@ publish_message = Group.publish_message
 @require_application_auth
 def create_group():
     appid = request.appid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
     master = obj["master"]
     name = obj["name"]
     is_super = obj["super"] if obj.has_key("super") else False
@@ -132,7 +136,11 @@ def upgrade_group(gid):
 @require_application_auth
 def update_group(gid):
     appid = request.appid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
     name = obj["name"]
     Group.update_group_name(g._db, gid, name)
 
@@ -151,7 +159,10 @@ def update_group(gid):
 @require_application_auth
 def add_group_member(gid):
     appid = request.appid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
     inviter = None
     if type(obj) is dict:
         if 'members' in obj:
@@ -178,7 +189,8 @@ def add_group_member(gid):
             Group.add_group_member(g._db, gid, member_id)
             # 可能是重新加入群
             User.reset_group_synckey(g.rds, appid, member_id, gid)
-        except umysql.SQLError, e:
+        except pymysql.err.IntegrityError as e:
+            # 可能是重新加入群
             #1062 duplicate member
             if e[0] != 1062:
                 raise
@@ -253,7 +265,12 @@ def leave_group_member(gid, memberid):
 @require_application_auth
 def delete_group_member(gid):
     appid = request.appid
-    members = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
+    members = members
     if len(members) == 0:
         raise ResponseMeta(400, "no memebers to delete")
 

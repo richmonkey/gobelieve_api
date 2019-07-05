@@ -1,7 +1,7 @@
 import os
-from StringIO import StringIO
+from io import BytesIO
 from PIL import Image
-from fs import FS
+from .fs import FS
 
 def parse_param(p):
     width = 0
@@ -91,7 +91,7 @@ def create_thumbnail(data, params):
     if not data:
         return data
 
-    f = StringIO(data)
+    f = BytesIO(data)
     p = Image.open(f)
 
     if cut:
@@ -99,7 +99,7 @@ def create_thumbnail(data, params):
     else:
         p = deflate_image(p, width, height)
 
-    output = StringIO()
+    output = BytesIO()
     p.save(output, 'JPEG')
     thumbnail = output.getvalue()
     return thumbnail

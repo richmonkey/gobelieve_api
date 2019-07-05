@@ -158,7 +158,7 @@ class Group(object):
                     pipe.execute()
                     logging.info("publish msg:%s actions:%s", msg, group_actions)
                     break
-                except redis.WatchError, e:
+                except redis.WatchError as e:
                     logging.info("watch err:%s", e)
         
    

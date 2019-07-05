@@ -8,7 +8,7 @@ import logging
 import random
 import time
 import json
-import md5
+import hashlib
 import base64
 import config
 
@@ -95,13 +95,16 @@ def require_application_auth(f):
             return INVALID_APPID()
         logging.debug("basic:%s", basic)
         basic = base64.b64decode(basic)
+        basic = basic.decode("utf-8")
         sp = basic.split(":", 1)
         if len(sp) != 2:
             return INVALID_APPID()
         appid = int(sp[0])
         appsecret = sp[1]
         secret = get_app_secret(g._db, appid)
-        secret = md5.new(secret).digest().encode("hex")
+        m = hashlib.md5()
+        m.update(secret.encode(encoding='UTF-8'))
+        secret = m.hexdigest()
         logging.debug("app secret:%s, %s", appsecret, secret)
         if appsecret.lower() != secret.lower():
             return INVALID_APPID()
@@ -121,13 +124,16 @@ def require_application_or_person_auth(f):
         if auth[:6] == "Basic ":
             basic = auth[6:]
             basic = base64.b64decode(basic)
+            basic = basic.decode()
             sp = basic.split(":", 1)
             if len(sp) != 2:
                 return INVALID_APPID()
             appid = int(sp[0])
             appsecret = sp[1]
             secret = get_app_secret(g._db, appid)
-            secret = md5.new(secret).digest().encode("hex")
+            m = hashlib.md5()
+            m.update(secret.encode(encoding='UTF-8'))
+            secret = m.hexdigest()
             logging.debug("app secret:%s, %s", appsecret, secret)
             if appsecret.lower() != secret.lower():
                 return INVALID_APPID()
@@ -153,8 +159,8 @@ def require_client_auth(f):
             basic = request.headers.get('Authorization')[6:]
         else:
             return INVALID_APPID()
-        logging.debug("basic:%s", basic)
         basic = base64.b64decode(basic)
+        basic = basic.decode()
         sp = basic.split(":", 1)
         if len(sp) != 2:
             return INVALID_APPID()

@@ -7,7 +7,7 @@ import logging
 from libs.util import make_response
 from libs.util import create_access_token
 from libs.response_meta import ResponseMeta
-from authorization import require_application_auth
+from .authorization import require_application_auth
 from models.user import User
 
 app = Blueprint('user', __name__)
@@ -21,10 +21,11 @@ def saslprep(string):
     return string
 
 def ha1(username, realm, password):
-    return hashlib.md5(':'.join((username, realm, saslprep(password)))).digest()
+    t = ':'.join((username, realm, saslprep(password)))
+    return hashlib.md5(t.encode()).hexdigest()
 
 def hmac(username, realm, password):
-    return ha1(username, realm, password).encode('hex')
+    return ha1(username, realm, password)
 
 
 @app.route("/auth/grant", methods=["POST"])
@@ -32,9 +33,8 @@ def hmac(username, realm, password):
 def grant_auth_token():
     rds = g.rds
     appid = request.appid
-    try:
-        obj = json.loads(request.data)
-    except ValueError, e:
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
         logging.debug("json decode err:%s", e)
         raise ResponseMeta(400, "json decode error")
 
@@ -65,22 +65,25 @@ def grant_auth_token():
 def user_setting(uid):
     rds = g.rds
     appid = request.appid
-    obj = json.loads(request.data)
-    name = obj["name"] if obj.has_key("name") else ""
-    if name:
-        User.set_user_name(rds, appid, uid, name)
-    elif obj.has_key('forbidden'):
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
+    if 'name' in obj:
+        User.set_user_name(rds, appid, uid, obj['name'])
+    elif 'forbidden' in obj:
         #聊天室禁言
         fb = 1 if obj['forbidden'] else 0
         User.set_user_forbidden(rds, appid, uid, fb)
         content = "%d,%d,%d"%(appid, uid, fb)
         publish_message(rds, "speak_forbidden", content)
-    elif obj.has_key("do_not_disturb"):
+    elif 'do_not_disturb' in obj:
         contact_id = obj['do_not_disturb']['peer_uid']
         on = obj['do_not_disturb']['on']
         User.set_user_do_not_disturb(g.rds, appid, uid,
                                         contact_id, on)
-    elif obj.has_key("mute"):
+    elif 'mute' in obj:
         User.set_mute(rds, appid, uid, obj["mute"])
     else:
         raise ResponseMeta(400, "invalid param")

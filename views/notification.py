@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import config
 import requests
-from urllib import urlencode
+from urllib.parse import urlencode
 from flask import request, Blueprint
 import flask
 from flask import g
 import logging
 import json
 import time
-from authorization import require_auth
+from .authorization import require_auth
 from models.user import User
 
 app = Blueprint('notification', __name__)

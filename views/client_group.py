@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 import config
 import requests
-from urllib import urlencode
+from urllib.parse import urlencode
 from flask import request, Blueprint
 import flask
 from flask import g
 import logging
 import json
 import time
-import umysql
+import pymysql
 import redis
-from authorization import require_application_or_person_auth
-from authorization import require_auth
+from .authorization import require_application_or_person_auth
+from .authorization import require_auth
 from models.group_model import Group
 from models.user import User
 
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
-from rpc import send_group_notification
+from .rpc import send_group_notification
 
 app = Blueprint('c_group', __name__, url_prefix="/client")
 
@@ -203,10 +203,11 @@ def add_group_member(gid):
             Group.add_group_member(g._db, gid, member_id)
             #可能是重新加入群
             User.reset_group_synckey(g.rds, appid, member_id, gid)
-        except umysql.SQLError, e:
+        except pymysql.err.IntegrityError as e:
+            # 可能是重新加入群
             #1062 duplicate member
             if e[0] != 1062:
-                raise
+                raise     
 
     g._db.commit()
 
