@@ -78,7 +78,7 @@ def get_one_supporter():
         User.set_seller(rds, appid, uid, store_id, seller['id'])
         
     name = ""
-    if seller.has_key('name') and seller['name']:
+    if 'name' in seller and seller['name']:
         name = seller['name'].split('@')[0]
 
     resp = {

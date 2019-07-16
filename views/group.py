@@ -32,7 +32,7 @@ def create_group():
 
     master = obj["master"]
     name = obj["name"]
-    is_super = obj["super"] if obj.has_key("super") else False
+    is_super = obj["super"] if "super" in obj else False
     members = obj["members"]
 
     if hasattr(request, 'uid') and request.uid != master:
@@ -40,11 +40,11 @@ def create_group():
         
     gid = 0
     if config.EXTERNAL_GROUP_ID:
-        gid = obj['group_id'] if obj.has_key('group_id') else 0
+        gid = obj['group_id'] if 'group_id' in obj else 0
 
     #支持members参数为对象数组
     #[{uid:"", name:"", avatar:"可选"}, ...]
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
     
     if gid > 0:
         gid = Group.create_group_ext(g._db, gid, appid, master, name, 
@@ -181,7 +181,7 @@ def add_group_member(gid):
         raise ResponseMeta(400, "group non exists")
     
     # 支持members参数为对象数组
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
     
     g._db.begin()
     for member_id in memberIDs:
@@ -192,7 +192,7 @@ def add_group_member(gid):
         except pymysql.err.IntegrityError as e:
             # 可能是重新加入群
             #1062 duplicate member
-            if e[0] != 1062:
+            if e.args[0] != 1062:
                 raise
 
     g._db.commit()
@@ -270,7 +270,7 @@ def delete_group_member(gid):
         logging.debug("json decode err:%s", e)
         raise ResponseMeta(400, "json decode error")
 
-    members = members
+    members = obj
     if len(members) == 0:
         raise ResponseMeta(400, "no memebers to delete")
 
@@ -301,9 +301,9 @@ def group_member_setting(gid, memberid):
         raise ResponseMeta(400, "group non exists")
     
     obj = json.loads(request.data)
-    if obj.has_key('do_not_disturb'):
+    if 'do_not_disturb' in obj:
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
-    elif obj.has_key('nickname'):
+    elif 'nickname' in obj:
         Group.update_nickname(g._db, gid, uid, obj['nickname'])
         v = {
             "group_id":gid,
@@ -314,7 +314,7 @@ def group_member_setting(gid, memberid):
         }
         op = {"update_member_nickname":v}
         send_group_notification(appid, gid, op, None)
-    elif obj.has_key('mute'):
+    elif 'mute' in obj:
         mute = 1 if obj['mute'] else 0
         Group.update_mute(g._db, gid, uid, mute)
         content = "%d,%d,%d" % (gid, memberid, mute)

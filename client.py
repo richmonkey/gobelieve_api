@@ -33,7 +33,7 @@ app.debug = config.DEBUG
 
 FS.HOST = config.FS_HOST
 FS.PORT = config.FS_PORT
-FS.ROOT = config.FS_ROOT
+
 
 rds = redis.StrictRedis(host=config.REDIS_HOST, password=config.REDIS_PASSWORD, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 
@@ -47,7 +47,9 @@ def before_request():
     cnf = config.MYSQL
     db = getattr(g, '_db', None)    
     if db is None:
-        g._db = Mysql(*cnf)
+        g._db = Mysql(config.MYSQL_HOST, config.MYSQL_USER, config.MYSQL_PASSWD,
+                      config.MYSQL_DATABASE, config.MYSQL_PORT,
+                      config.MYSQL_CHARSET, config.MYSQL_AUTOCOMMIT)                
 
 def app_teardown(exception):
     LOGGER.debug('app_teardown')

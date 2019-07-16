@@ -97,7 +97,7 @@ def TestGroupNotification():
 
     notification = json.dumps({"text":"hello"})
     data = {
-        "group_id":812,
+        "group_id":2778,
         "content":notification
     }
     r = requests.post(url, data=json.dumps(data), headers=headers)
@@ -248,7 +248,7 @@ def TestDeviceToken():
     send_message(2000, 1000, content)
     time.sleep(1)
     
-    url = URL + "/device/unbind"
+    url = URL2 + "/device/unbind"
     r = requests.post(url, data=json.dumps(data), headers = headers)
     assert(r.status_code == 200)
 
@@ -347,16 +347,19 @@ TestFormImage()
 TestFormAudio()
 TestImage()
 #TestAudio()
-#TestDeviceToken()
-
-
-
-
-#TestRoomMessage()
+TestDeviceToken()
+ 
+ 
+ 
+ 
+TestRoomMessage()
 TestForbidden()
 TestDoNotDisturb()
 TestMute()
-#TestGroupNotification()
-#TestCustomerRegister()
+ 
+ 
+TestGroupNotification()
+
+TestCustomerRegister()
 TestGetOfflineCount()
 

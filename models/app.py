@@ -5,7 +5,7 @@ class App(object):
         sql = "SELECT store_id FROM app WHERE app.id=%s"
         r = db.execute(sql, appid)
         app = r.fetchone()
-        if app and app.has_key("store_id"):
+        if app and "store_id" in app:
             return app["store_id"]
         else:
             return 0

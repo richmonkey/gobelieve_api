@@ -2,7 +2,7 @@
 
 import requests
 
-class FS2(object):
+class FS(object):
     HOST = None
     PORT = None
     @classmethod
@@ -21,7 +21,7 @@ class FS2(object):
 
 import os
 
-class FS(object):
+class FS2(object):
     ROOT = None
     @classmethod
     def upload(cls, path, data):

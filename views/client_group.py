@@ -33,7 +33,7 @@ def create_group():
     obj = json.loads(request.data)
     master = obj["master"]
     name = obj["name"]
-    is_super = obj["super"] if obj.has_key("super") else False
+    is_super = obj["super"] if "super" in obj else False
     members = obj["members"]
 
     if hasattr(request, 'uid') and request.uid != master:
@@ -41,7 +41,7 @@ def create_group():
 
     #支持members参数为对象数组
     #[{uid:"", name:"", avatar:"可选"}, ...]
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
             
     gid = Group.create_group(g._db, appid, master, name, 
                              is_super, memberIDs)
@@ -153,7 +153,7 @@ def update_group(gid):
     appid = request.appid
     obj = json.loads(request.data)
 
-    if obj.has_key('name'):
+    if 'name' in obj:
         name = obj["name"]
         Group.update_group_name(g._db, gid, name)
          
@@ -164,7 +164,7 @@ def update_group(gid):
         }
         op = {"update_name":v}
         send_group_notification(appid, gid, op, None)
-    elif obj.has_key('notice'):
+    elif 'notice' in obj:
         notice = obj["notice"]
         Group.update_group_notice(g._db, gid, notice)
         v = {
@@ -195,7 +195,7 @@ def add_group_member(gid):
         return ""
 
     #支持members参数为对象数组
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
     
     g._db.begin()
     for member_id in memberIDs:
@@ -206,7 +206,7 @@ def add_group_member(gid):
         except pymysql.err.IntegrityError as e:
             # 可能是重新加入群
             #1062 duplicate member
-            if e[0] != 1062:
+            if e.args[0] != 1062:
                 raise     
 
     g._db.commit()
@@ -303,11 +303,11 @@ def group_member_setting(gid, memberid):
         raise ResponseMeta(400, "setting other is forbidden")
 
     obj = json.loads(request.data)
-    if obj.has_key('quiet'):
+    if 'quiet' in obj:
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['quiet'])
-    elif obj.has_key('do_not_disturb'):
+    elif 'do_not_disturb' in obj:
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
-    elif obj.has_key('nickname'):
+    elif 'nickname' in obj:
         Group.update_nickname(g._db, gid, uid, obj['nickname'])
         v = {
             "group_id":gid,
