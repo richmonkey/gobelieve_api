@@ -54,12 +54,22 @@ def create_group():
                                  is_super, memberIDs)
     
     s = 1 if is_super else 0
-    content = "%d,%d,%d"%(gid, appid, s)
-    publish_message(g.rds, "group_create", content)
+    
+    content = {
+        "group_id":gid,
+        "app_id":appid,
+        "super":s,
+        "name":Group.GROUP_EVENT_CREATE
+    }
+    publish_message(g.rds, content)    
     
     for mem in memberIDs:
-        content = "%d,%d"%(gid, mem)
-        publish_message(g.rds, "group_member_add", content)
+        content = {
+            "group_id":gid,
+            "member_id":mem,
+            "name":Group.GROUP_EVENT_MEMBER_ADD
+        }
+        publish_message(g.rds, content)        
     
     v = {
         "group_id":gid, 
@@ -94,8 +104,8 @@ def delete_group(gid):
     op = {"disband":v}
     send_group_notification(appid, gid, op, None)
 
-    content = "%d"%gid
-    publish_message(g.rds, "group_disband", content)
+    content = {"group_id":gid, "name":Group.GROUP_EVENT_DISBAND}
+    publish_message(g.rds, content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -116,8 +126,13 @@ def upgrade_group(gid):
 
     Group.update_group_super(g._db, gid, 1)
 
-    content = "%d,%d,%d"%(gid, appid, 1)
-    publish_message(g.rds, "group_upgrade", content)
+    content = {
+        "group_id":gid,
+        "app_id":appid,
+        "super":1,
+        "name":Group.GROUP_EVENT_UPGRADE
+    }
+    publish_message(g.rds, content)
 
     v = {
         "group_id":gid,
@@ -214,9 +229,13 @@ def add_group_member(gid):
 
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
-         
-        content = "%d,%d"%(gid, member_id)
-        publish_message(g.rds, "group_member_add", content)
+
+        content = {
+            "group_id":gid,
+            "member_id":member_id,
+            "name":Group.GROUP_EVENT_MEMBER_ADD
+        }
+        publish_message(g.rds, content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -239,9 +258,14 @@ def remove_group_member(appid, gid, group_name, member):
     
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
-     
-    content = "%d,%d"%(gid,memberid)
-    publish_message(g.rds, "group_member_remove", content)
+
+    content = {
+        "group_id":gid,
+        "member_id":memberid,
+        "name":Group.GROUP_EVENT_MEMBER_REMOVE
+    }
+    publish_message(g.rds, content)    
+
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
 @require_application_auth
@@ -317,8 +341,14 @@ def group_member_setting(gid, memberid):
     elif 'mute' in obj:
         mute = 1 if obj['mute'] else 0
         Group.update_mute(g._db, gid, uid, mute)
-        content = "%d,%d,%d" % (gid, memberid, mute)
-        publish_message(g.rds, "group_member_mute", content)
+
+        content = {
+            "group_id":gid,
+            "member_id":memberid,
+            "mute":mute,
+            "name":Group.GROUP_EVENT_MEMBER_MUTE
+        }
+        publish_message(g.rds, content)
     else:
         raise ResponseMeta(400, "no action")
 
