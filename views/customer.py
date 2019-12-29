@@ -12,14 +12,13 @@ from libs.crossdomain import crossdomain
 from libs.util import make_response
 from libs.util import create_access_token
 from libs.response_meta import ResponseMeta
-from authorization import require_application_or_person_auth
-from authorization import require_application_auth
-from authorization import require_auth
-from authorization import require_client_auth
+from .authorization import require_application_or_person_auth
+from .authorization import require_application_auth
+from .authorization import require_auth
+from .authorization import require_client_auth
 from models.user import User
 from models.app import App
 from models.customer import Customer
-from rpc import init_message_queue
 
 app = Blueprint('customer', __name__)
 
@@ -29,7 +28,11 @@ app = Blueprint('customer', __name__)
 def customer_register():
     rds = g.rds
     db = g._db
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
     appid = obj.get("appid", 0)
     uid = obj.get("customer_id", "")
     name = obj.get("name", "")
@@ -57,15 +60,6 @@ def customer_register():
 
     User.save_user(rds, appid, client_id, name, avatar, token)
     User.save_token(rds, appid, client_id, token)
-
-    if obj.has_key("platform_id") and obj.has_key("device_id"):
-        platform_id = obj['platform_id']
-        device_id = obj['device_id']
-        s = init_message_queue(appid, client_id, platform_id, device_id)
-        if s:
-            logging.error("init message queue success")
-        else:
-            logging.error("init message queue fail")
         
     resp = {
         "token":token,

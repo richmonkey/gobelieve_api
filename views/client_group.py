@@ -4,13 +4,13 @@ from flask import request, Blueprint, g
 import json
 import time
 import pymysql
-from authorization import require_auth
+from .authorization import require_auth
 from models.group_model import Group
 from models.user import User
 
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
-from rpc import send_group_notification
+from .rpc import send_group_notification
 
 app = Blueprint('c_group', __name__, url_prefix="/client")
 
@@ -26,7 +26,7 @@ def create_group():
     obj = json.loads(request.data)
     master = obj["master"]
     name = obj["name"]
-    is_super = obj["super"] if obj.has_key("super") else False
+    is_super = obj["super"] if "super" in obj else False
     members = obj["members"]
 
     if hasattr(request, 'uid') and request.uid != master:
@@ -34,18 +34,27 @@ def create_group():
 
     #支持members参数为对象数组
     #[{uid:"", name:"", avatar:"可选"}, ...]
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
             
     gid = Group.create_group(g._db, appid, master, name, 
                              is_super, memberIDs)
     
     s = 1 if is_super else 0
-    content = "%d,%d,%d"%(gid, appid, s)
-    publish_message(g.rds, "group_create", content)
+    content = {
+        "group_id":gid,
+        "app_id":appid,
+        "super":s,
+        "name":Group.GROUP_EVENT_CREATE
+    }
+    publish_message(g.rds, content)
     
     for mem in memberIDs:
-        content = "%d,%d"%(gid, mem)
-        publish_message(g.rds, "group_member_add", content)
+        content = {
+            "group_id":gid,
+            "member_id":mem,
+            "name":Group.GROUP_EVENT_MEMBER_ADD
+        }
+        publish_message(g.rds, content)
     
     v = {
         "group_id":gid, 
@@ -139,8 +148,8 @@ def delete_group(gid):
     op = {"disband":v}
     send_group_notification(appid, gid, op, None)
 
-    content = "%d"%gid
-    publish_message(g.rds, "group_disband", content)
+    content = {"group_id":gid, "name":Group.GROUP_EVENT_DISBAND}
+    publish_message(g.rds, content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -152,7 +161,7 @@ def update_group(gid):
     appid = request.appid
     obj = json.loads(request.data)
 
-    if obj.has_key('name'):
+    if 'name' in obj:
         name = obj["name"]
         Group.update_group_name(g._db, gid, name)
          
@@ -163,7 +172,7 @@ def update_group(gid):
         }
         op = {"update_name":v}
         send_group_notification(appid, gid, op, None)
-    elif obj.has_key('notice'):
+    elif 'notice' in obj:
         notice = obj["notice"]
         Group.update_group_notice(g._db, gid, notice)
         v = {
@@ -194,18 +203,18 @@ def add_group_member(gid):
         return ""
 
     #支持members参数为对象数组
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
     
     g._db.begin()
     for member_id in memberIDs:
         try:
             Group.add_group_member(g._db, gid, member_id)
             User.reset_group_synckey(g.rds, appid, member_id, gid)
-        except pymysql.err.IntegrityError, e:
+        except pymysql.err.IntegrityError as e:
             # 可能是重新加入群
             #1062 duplicate member
-            if e[0] != 1062:
-                raise
+            if e.args[0] != 1062:
+                raise     
 
     g._db.commit()
 
@@ -224,8 +233,12 @@ def add_group_member(gid):
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
          
-        content = "%d,%d"%(gid, member_id)
-        publish_message(g.rds, "group_member_add", content)
+        content = {
+            "group_id":gid,
+            "member_id":member_id,
+            "name":Group.GROUP_EVENT_MEMBER_ADD
+        }
+        publish_message(g.rds, content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -248,8 +261,12 @@ def remove_group_member(appid, gid, member):
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
      
-    content = "%d,%d"%(gid,memberid)
-    publish_message(g.rds, "group_member_remove", content)
+    content = {
+        "group_id":gid,
+        "member_id":memberid,
+        "name":Group.GROUP_EVENT_MEMBER_REMOVE
+    }
+    publish_message(g.rds, content)
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
 @require_auth
@@ -301,11 +318,11 @@ def group_member_setting(gid, memberid):
         raise ResponseMeta(400, "setting other is forbidden")
 
     obj = json.loads(request.data)
-    if obj.has_key('quiet'):
+    if 'quiet' in obj:
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['quiet'])
-    elif obj.has_key('do_not_disturb'):
+    elif 'do_not_disturb' in obj:
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
-    elif obj.has_key('nickname'):
+    elif 'nickname' in obj:
         Group.update_nickname(g._db, gid, uid, obj['nickname'])
         v = {
             "group_id":gid,

@@ -6,13 +6,13 @@ import logging
 import pymysql
 import json
 import time
-from authorization import require_application_auth
+from .authorization import require_application_auth
 from models.group_model import Group
 from models.user import User
 
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
-from rpc import send_group_notification
+from .rpc import send_group_notification
 
 app = Blueprint('group', __name__)
 
@@ -22,10 +22,14 @@ publish_message = Group.publish_message
 @require_application_auth
 def create_group():
     appid = request.appid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
     master = obj["master"]
     name = obj["name"]
-    is_super = obj["super"] if obj.has_key("super") else False
+    is_super = obj["super"] if "super" in obj else False
     members = obj["members"]
 
     if hasattr(request, 'uid') and request.uid != master:
@@ -33,11 +37,11 @@ def create_group():
         
     gid = 0
     if config.EXTERNAL_GROUP_ID:
-        gid = obj['group_id'] if obj.has_key('group_id') else 0
+        gid = obj['group_id'] if 'group_id' in obj else 0
 
     #支持members参数为对象数组
     #[{uid:"", name:"", avatar:"可选"}, ...]
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
     
     if gid > 0:
         gid = Group.create_group_ext(g._db, gid, appid, master, name, 
@@ -47,12 +51,22 @@ def create_group():
                                  is_super, memberIDs)
     
     s = 1 if is_super else 0
-    content = "%d,%d,%d"%(gid, appid, s)
-    publish_message(g.rds, "group_create", content)
+    
+    content = {
+        "group_id":gid,
+        "app_id":appid,
+        "super":s,
+        "name":Group.GROUP_EVENT_CREATE
+    }
+    publish_message(g.rds, content)    
     
     for mem in memberIDs:
-        content = "%d,%d"%(gid, mem)
-        publish_message(g.rds, "group_member_add", content)
+        content = {
+            "group_id":gid,
+            "member_id":mem,
+            "name":Group.GROUP_EVENT_MEMBER_ADD
+        }
+        publish_message(g.rds, content)        
     
     v = {
         "group_id":gid, 
@@ -87,8 +101,8 @@ def delete_group(gid):
     op = {"disband":v}
     send_group_notification(appid, gid, op, None)
 
-    content = "%d"%gid
-    publish_message(g.rds, "group_disband", content)
+    content = {"group_id":gid, "name":Group.GROUP_EVENT_DISBAND}
+    publish_message(g.rds, content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -109,8 +123,13 @@ def upgrade_group(gid):
 
     Group.update_group_super(g._db, gid, 1)
 
-    content = "%d,%d,%d"%(gid, appid, 1)
-    publish_message(g.rds, "group_upgrade", content)
+    content = {
+        "group_id":gid,
+        "app_id":appid,
+        "super":1,
+        "name":Group.GROUP_EVENT_UPGRADE
+    }
+    publish_message(g.rds, content)
 
     v = {
         "group_id":gid,
@@ -129,7 +148,11 @@ def upgrade_group(gid):
 @require_application_auth
 def update_group(gid):
     appid = request.appid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
     name = obj["name"]
     Group.update_group_name(g._db, gid, name)
 
@@ -148,7 +171,10 @@ def update_group(gid):
 @require_application_auth
 def add_group_member(gid):
     appid = request.appid
-    obj = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
     inviter = None
     if type(obj) is dict:
         if 'members' in obj:
@@ -167,17 +193,17 @@ def add_group_member(gid):
         raise ResponseMeta(400, "group non exists")
     
     # 支持members参数为对象数组
-    memberIDs = map(lambda m:m['uid'] if type(m) == dict else m, members)
+    memberIDs = [m['uid'] if type(m) == dict else m for m in members]
     
     g._db.begin()
     for member_id in memberIDs:
         try:
             Group.add_group_member(g._db, gid, member_id)
             User.reset_group_synckey(g.rds, appid, member_id, gid)
-        except pymysql.err.IntegrityError, e:
+        except pymysql.err.IntegrityError as e:
             # 可能是重新加入群
-            # 1062 duplicate member
-            if e[0] != 1062:
+            #1062 duplicate member
+            if e.args[0] != 1062:
                 raise
 
     g._db.commit()
@@ -199,9 +225,13 @@ def add_group_member(gid):
 
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
-         
-        content = "%d,%d"%(gid, member_id)
-        publish_message(g.rds, "group_member_add", content)
+
+        content = {
+            "group_id":gid,
+            "member_id":member_id,
+            "name":Group.GROUP_EVENT_MEMBER_ADD
+        }
+        publish_message(g.rds, content)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -224,9 +254,14 @@ def remove_group_member(appid, gid, group_name, member):
     
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
-     
-    content = "%d,%d"%(gid,memberid)
-    publish_message(g.rds, "group_member_remove", content)
+
+    content = {
+        "group_id":gid,
+        "member_id":memberid,
+        "name":Group.GROUP_EVENT_MEMBER_REMOVE
+    }
+    publish_message(g.rds, content)    
+
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
 @require_application_auth
@@ -250,7 +285,12 @@ def leave_group_member(gid, memberid):
 @require_application_auth
 def delete_group_member(gid):
     appid = request.appid
-    members = json.loads(request.data)
+    obj = request.get_json(force=True, silent=True, cache=False)
+    if obj is None:
+        logging.debug("json decode err:%s", e)
+        raise ResponseMeta(400, "json decode error")
+
+    members = obj
     if len(members) == 0:
         raise ResponseMeta(400, "no memebers to delete")
 
@@ -281,9 +321,9 @@ def group_member_setting(gid, memberid):
         raise ResponseMeta(400, "group non exists")
     
     obj = json.loads(request.data)
-    if obj.has_key('do_not_disturb'):
+    if 'do_not_disturb' in obj:
         User.set_group_do_not_disturb(g.rds, appid, uid, gid, obj['do_not_disturb'])
-    elif obj.has_key('nickname'):
+    elif 'nickname' in obj:
         Group.update_nickname(g._db, gid, uid, obj['nickname'])
         v = {
             "group_id":gid,
@@ -294,11 +334,17 @@ def group_member_setting(gid, memberid):
         }
         op = {"update_member_nickname":v}
         send_group_notification(appid, gid, op, None)
-    elif obj.has_key('mute'):
+    elif 'mute' in obj:
         mute = 1 if obj['mute'] else 0
         Group.update_mute(g._db, gid, uid, mute)
-        content = "%d,%d,%d" % (gid, memberid, mute)
-        publish_message(g.rds, "group_member_mute", content)
+
+        content = {
+            "group_id":gid,
+            "member_id":memberid,
+            "mute":mute,
+            "name":Group.GROUP_EVENT_MEMBER_MUTE
+        }
+        publish_message(g.rds, content)
     else:
         raise ResponseMeta(400, "no action")
 

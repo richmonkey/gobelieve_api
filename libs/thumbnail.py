@@ -1,5 +1,5 @@
 import os
-from StringIO import StringIO
+from io import BytesIO
 from PIL import Image
 
 def parse_param(p):
@@ -90,7 +90,7 @@ def create_thumbnail(data, params):
     if not data:
         return data
 
-    f = StringIO(data)
+    f = BytesIO(data)
     p = Image.open(f)
 
     if cut:
@@ -98,7 +98,7 @@ def create_thumbnail(data, params):
     else:
         p = deflate_image(p, width, height)
 
-    output = StringIO()
+    output = BytesIO()
     if p.mode == 'RGBA':
         p.save(output, "PNG")
     else:

@@ -1,7 +1,7 @@
 from flask import request
 from flask import Flask
 import flask
-import md5
+import hashlib
 import json
 import os
 from  libs.thumbnail import *
@@ -9,7 +9,7 @@ from libs.fs import FS
 from flask import request, Blueprint
 from werkzeug import secure_filename
 from libs.util import make_response
-from authorization import require_auth
+from .authorization import require_auth
 import logging
 
 app = Blueprint('image', __name__)
@@ -29,7 +29,7 @@ def upload_form_image():
         return make_response(400)
     
     f = request.files['file']
-    content_type = f.headers["Content-Type"] if f.headers.has_key("Content-Type") else ""
+    content_type = f.headers.get("Content-Type", '')
     ext = image_ext(content_type)
     if not ext:
         return make_response(400, {"error":"can't get image extenstion"})
@@ -38,7 +38,7 @@ def upload_form_image():
     if not data:
         return make_response(400, {"error":"data is null"})
 
-    name = md5.new(data).hexdigest()
+    name = hashlib.md5(data).hexdigest()
     path = "/images/" + name + ext
 
     r = FS.upload(path, data)
@@ -57,13 +57,13 @@ def upload_image():
     if not request.data:
         return make_response(400)
 
-    content_type = request.headers["Content-Type"] if request.headers.has_key("Content-Type") else ""
+    content_type = request.headers.get("Content-Type", '')
     ext = image_ext(content_type)
     if not ext:
         return make_response(400)
 
     data = request.data
-    name = md5.new(data).hexdigest()
+    name = hashlib.md5(data).hexdigest()
     path = "/images/" + name + ext
     r = FS.upload(path, data)
     if not r:
@@ -81,6 +81,7 @@ def download_thumbnail(path):
         data = FS.download(origin)
         if not data:
             return ""
+        print("data len:", len(data), type(data))
         data = create_thumbnail(data, params)
         r = FS.upload(tb_path, data)
         if not r:
@@ -89,7 +90,6 @@ def download_thumbnail(path):
     
 @app.route('/images/<image_path>', methods=['GET'])
 def download_image(image_path):
-    print image_path
     path = "/images/" + image_path
     if is_thumbnail(path):
         data = download_thumbnail(path)
@@ -105,7 +105,7 @@ def download_image(image_path):
         elif image_path.endswith(".png"):
             res.headers['Content-Type'] = "image/png"
         else:
-            print "invalid image type"
+            logging.info("invalid image type")
         return res
 
 

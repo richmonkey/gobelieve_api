@@ -11,16 +11,15 @@ import random
 from libs.crossdomain import crossdomain
 from libs.util import make_response
 from libs.response_meta import ResponseMeta
-from authorization import require_application_or_person_auth
-from authorization import require_application_auth
-from authorization import require_auth
-from authorization import require_client_auth
+from .authorization import require_application_or_person_auth
+from .authorization import require_application_auth
+from .authorization import require_auth
+from .authorization import require_client_auth
 from models.user import User
 from models.app import App
 from models.customer import Customer
 from models.seller import Seller
 from models.supporter import Supporter
-from rpc import init_message_queue
 from libs.util import make_json_response
 
 app = Blueprint('supporter', __name__)
@@ -79,7 +78,7 @@ def get_one_supporter():
         User.set_seller(rds, appid, uid, store_id, seller['id'])
         
     name = ""
-    if seller.has_key('name') and seller['name']:
+    if 'name' in seller and seller['name']:
         name = seller['name'].split('@')[0]
 
     resp = {

@@ -1,14 +1,13 @@
+#!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
 from flask import request
 from flask import Flask
 from flask import g
-import flask
-import md5
 import json
 import logging
 import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
+
 
 import os
 import random
@@ -25,7 +24,7 @@ import config
 app = Flask(__name__)
 app.debug = config.DEBUG
 
-rds = redis.StrictRedis(host=config.REDIS_HOST, password=config.REDIS_PASSWORD, port=config.REDIS_PORT, db=config.REDIS_DB)
+rds = redis.StrictRedis(host=config.REDIS_HOST, password=config.REDIS_PASSWORD, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 
 
 def before_request():
@@ -35,8 +34,8 @@ def before_request():
     db = getattr(g, '_db', None)
     if db is None:
         g._db = Mysql(config.MYSQL_HOST, config.MYSQL_USER, config.MYSQL_PASSWD,
-                   config.MYSQL_DATABASE, config.MYSQL_PORT,
-                   config.MYSQL_CHARSET, config.MYSQL_AUTOCOMMIT)
+                      config.MYSQL_DATABASE, config.MYSQL_PORT,
+                      config.MYSQL_CHARSET, config.MYSQL_AUTOCOMMIT)        
 
 def app_teardown(exception):
     logging.debug('app_teardown')
@@ -78,7 +77,7 @@ def init_app(app):
     app.teardown_appcontext(app_teardown)
     app.before_request(before_request)
 
-    for error in range(400, 402) + range(403, 407) + range(408, 419) + range(500, 506):
+    for error in list(range(400, 402)) + list(range(403, 407)) + list(range(408, 419)) + list(range(500, 506)):
         app.register_error_handler(error, http_error_handler)
 
     app.register_error_handler(ResponseMeta, response_meta_handler)

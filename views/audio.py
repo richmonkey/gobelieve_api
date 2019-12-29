@@ -2,12 +2,12 @@
 from flask import request, Blueprint
 from libs.util import make_response
 from libs.fs import FS
-import md5
+import hashlib
 import json
 import subprocess
 import os
 import tempfile
-from authorization import require_auth
+from .authorization import require_auth
 
 app = Blueprint('audio', __name__)
 
@@ -46,7 +46,7 @@ def upload_form_file():
     if not data:
         return NO_CONTENT()
 
-    md5_value = md5.new(data).hexdigest()
+    md5_value = hashlib.md5(data).hexdigest()
     path = "/audios/" + md5_value
     r = FS.upload(path, data)
     if not r:
@@ -68,7 +68,7 @@ def upload_file():
     if not request.data:
         return NO_CONTENT()
 
-    md5_value = md5.new(request.data).hexdigest()
+    md5_value = hashlib.md5(request.data).hexdigest()
     path = "/audios/" + md5_value
     r = FS.upload(path, request.data)
     if not r:
