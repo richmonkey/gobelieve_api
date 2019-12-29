@@ -54,7 +54,7 @@ def post_group_notification_s(appid, gid, notification, members):
 
 def post_group_notification(appid, gid, op, members):
     try:
-        return send_group_notification_s(appid, gid, json.dumps(op), members)
+        return post_group_notification_s(appid, gid, json.dumps(op), members)
     except Exception as e:
         logging.warning("send group notification err:%s", e)
         return None
