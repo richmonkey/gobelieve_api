@@ -3,32 +3,34 @@ import config
 import logging
 import json
 import requests
-from urllib.parse import urlencode
 
 im_url=config.IM_RPC_URL
 
 
-def post_message(appid, sender, receiver, cls, content):
+def post_peer_message(appid, sender, receiver, content):
     params = {
         "appid":appid,
-        "class":cls,
+        "receiver":receiver,
         "sender":sender
     }
 
-    req_obj = {
-        "receiver":receiver,
-        "content":content,
-    }
+    url = im_url + "/post_peer_message"
+    res = requests.post(url, data=content.encode("utf-8"), params=params)
+    return res
 
-    url = im_url + "/post_im_message?" + urlencode(params)
-    logging.debug("url:%s", url)
-    headers = {"Content-Type":"application/json"}
-    res = requests.post(url, data=json.dumps(req_obj), headers=headers)
+
+def post_group_message(appid, sender, receiver, content):
+    params = {
+        "appid":appid,
+        "sender":sender,        
+        "receiver":receiver,
+    }
+    url = im_url + "/post_group_message"
+    res = requests.post(url, data=content.encode("utf-8"), params=params)
     return res
     
 
-
-def send_group_notification_s(appid, gid, notification, members):
+def post_group_notification_s(appid, gid, notification, members):
     url = im_url + "/post_group_notification"
 
     obj = {
@@ -49,12 +51,53 @@ def send_group_notification_s(appid, gid, notification, members):
         logging.debug("send group notification success:%s", data)
     return resp
 
-def send_group_notification(appid, gid, op, members):
+
+def post_group_notification(appid, gid, op, members):
     try:
         return send_group_notification_s(appid, gid, json.dumps(op), members)
     except Exception as e:
         logging.warning("send group notification err:%s", e)
         return None
+
+
+def send_group_notification(appid, gid, op, members):
+    return post_group_notification(appid, gid, op, members)
+
+
+def post_peer_notification(appid, uid, content):
+    params = {
+        "appid":appid,
+        "uid":uid
+    }    
+    url = im_url + "/post_notification"
+
+    headers = {"Content-Type":"text/plain; charset=UTF-8"}
+    resp = requests.post(url, data=content.encode("utf8"), headers=headers, params=params)
+    return resp
+
+
+def post_system_message(appid, uid, content):
+    params = {
+        "appid":appid,
+        "uid":uid
+    }
+    url = im_url + "/post_system_message"
+
+    headers = {"Content-Type":"text/plain; charset=UTF-8"}
+    resp = requests.post(url, data=content.encode("utf8"), headers=headers, params=params)    
+    return resp
+
+
+def post_room_message(appid, uid, room_id, content):
+    params = {
+        "appid":appid,
+        "uid":uid,
+        "room":room_id
+    }
+    url = im_url + "/post_room_message"
+    headers = {"Content-Type":"text/plain; charset=UTF-8"}
+    resp = requests.post(url, data=content.encode("utf8"), headers=headers, params=params)
+    return resp
 
 
 def get_offline_count(appid, uid, platform_id, device_id):
