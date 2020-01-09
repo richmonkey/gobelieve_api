@@ -25,3 +25,7 @@ IM_RPC_URL = "http://127.0.0.1:6666"
 
 #支持外部群组id
 EXTERNAL_GROUP_ID=True
+
+IP_PERMISSIONS = {
+    7: ["127.0.0.1"]
+}

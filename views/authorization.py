@@ -34,19 +34,24 @@ class AccessToken(object):
 def INVALID_ACCESS_TOKEN():
     meta = {"message":"非法的access token", "code":400}
     e = {"error":"非法的access token", "meta":meta}
-    logging.warn("非法的access token")
+    logging.warning("非法的access token")
     return make_response(400, e)
 
 def INVALID_APPID():
     meta = {"message":"非法的appid", "code":400}
     e = {"meta":meta}
-    logging.warn("非法的appid")
+    logging.warning("非法的appid")
+    return make_response(400, e)
+
+def INVALID_IP():
+    meta = {"message":"非法的ip", "code":400}
+    e = {"meta":meta}
     return make_response(400, e)
 
 def INVALID_AUTHORIZATION():
     meta = {"message":"非法的authorization", "code":400}
     e = {"meta":meta}
-    logging.warn("非法的authorization")
+    logging.warning("非法的authorization")
     return make_response(400, e)
 
 
@@ -108,6 +113,12 @@ def require_application_auth(f):
         logging.debug("app secret:%s, %s", appsecret, secret)
         if appsecret.lower() != secret.lower():
             return INVALID_APPID()
+        ip = request.headers.get('X-Real-IP')
+        if ip and appid in config.IP_PERMISSIONS:
+            if ip not in config.IP_PERMISSIONS[appid]:
+                logging.warning("非法的ip:%s", ip)
+                return INVALID_IP()
+
         request.appid = appid
         return f(*args, **kwargs)
     return wrapper
