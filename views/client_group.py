@@ -14,10 +14,6 @@ from .rpc import send_group_notification
 
 app = Blueprint('c_group', __name__, url_prefix="/client")
 
-im_url=config.IM_RPC_URL
-
-
-publish_message = Group.publish_message
 
 @app.route("/groups", methods=["POST"])
 @require_auth
@@ -38,24 +34,12 @@ def create_group():
             
     gid = Group.create_group(g._db, appid, master, name, 
                              is_super, memberIDs)
-    
-    s = 1 if is_super else 0
-    content = {
-        "group_id":gid,
-        "app_id":appid,
-        "super":s,
-        "name":Group.GROUP_EVENT_CREATE
-    }
-    publish_message(g.rds, content)
-    
+
+    Group.publish_create_event(g.rds, appid, gid, is_super)
+
     for mem in memberIDs:
-        content = {
-            "group_id":gid,
-            "member_id":mem,
-            "name":Group.GROUP_EVENT_MEMBER_ADD
-        }
-        publish_message(g.rds, content)
-    
+        Group.publish_member_add_event(g.rds, gid, mem)
+
     v = {
         "group_id":gid, 
         "master":master, 
@@ -148,8 +132,7 @@ def delete_group(gid):
     op = {"disband":v}
     send_group_notification(appid, gid, op, None)
 
-    content = {"group_id":gid, "name":Group.GROUP_EVENT_DISBAND}
-    publish_message(g.rds, content)
+    Group.publish_disband_event(g.rds, gid)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -232,13 +215,8 @@ def add_group_member(gid):
             
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
-         
-        content = {
-            "group_id":gid,
-            "member_id":member_id,
-            "name":Group.GROUP_EVENT_MEMBER_ADD
-        }
-        publish_message(g.rds, content)
+
+        Group.publish_member_add_event(g.rds, gid, member_id)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -260,13 +238,9 @@ def remove_group_member(appid, gid, member):
             
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
-     
-    content = {
-        "group_id":gid,
-        "member_id":memberid,
-        "name":Group.GROUP_EVENT_MEMBER_REMOVE
-    }
-    publish_message(g.rds, content)
+
+    Group.publish_member_remove_event(g.rds, gid, memberid)
+
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
 @require_auth

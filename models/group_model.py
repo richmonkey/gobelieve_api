@@ -133,10 +133,63 @@ class Group(object):
         cursor = db.execute(sql, (uid, appid))
         return list(cursor.fetchall())
 
+    @staticmethod
+    def publish_create_event(rds, appid, gid, is_super):
+        s = 1 if is_super else 0
+        content = {
+            "group_id": gid,
+            "app_id": appid,
+            "super": s,
+            "name": Group.GROUP_EVENT_CREATE
+        }
+        Group.publish_message(rds, content)
 
-    
-    #groups_actions_id 每个操作的序号，自增
-    #groups_actions 记录之前的action ID 和当前的action ID 格式："prev_id:id"
+    @staticmethod
+    def publish_upgrade_event(rds, appid, gid):
+        content = {
+            "group_id": gid,
+            "app_id": appid,
+            "super": 1,
+            "name": Group.GROUP_EVENT_UPGRADE
+        }
+        Group.publish_message(rds, content)
+
+    @staticmethod
+    def publish_disband_event(rds, gid):
+        content = {"group_id": gid, "name": Group.GROUP_EVENT_DISBAND}
+        Group.publish_message(rds, content)
+
+    @staticmethod
+    def publish_member_mute_event(rds, gid, member_id, is_mute):
+        mute = 1 if is_mute else 0
+        content = {
+            "group_id":gid,
+            "member_id":member_id,
+            "mute":mute,
+            "name":Group.GROUP_EVENT_MEMBER_MUTE
+        }
+        Group.publish_message(rds, content)
+
+    @staticmethod
+    def publish_member_add_event(rds, gid, member_id):
+        content = {
+            "group_id": gid,
+            "member_id": member_id,
+            "name": Group.GROUP_EVENT_MEMBER_ADD
+        }
+        Group.publish_message(rds, content)
+
+    @staticmethod
+    def publish_member_remove_event(rds, gid, member_id):
+        content = {
+            "group_id": gid,
+            "member_id": member_id,
+            "name": Group.GROUP_EVENT_MEMBER_REMOVE
+        }
+        Group.publish_message(rds, content)
+
+    # groups_actions_id 每个操作的序号，自增
+    # groups_actions 记录之前的action ID 和当前的action ID 格式："prev_id:id"
     @staticmethod
     def publish_message(rds, msg):
         with rds.pipeline() as pipe:

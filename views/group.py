@@ -16,8 +16,6 @@ from .rpc import send_group_notification
 
 app = Blueprint('group', __name__)
 
-publish_message = Group.publish_message
-        
 @app.route("/groups", methods=["POST"])
 @require_application_auth
 def create_group():
@@ -58,16 +56,16 @@ def create_group():
         "super":s,
         "name":Group.GROUP_EVENT_CREATE
     }
-    publish_message(g.rds, content)    
-    
+    Group.publish_create_event(g.rds, appid, gid, is_super)
+
     for mem in memberIDs:
         content = {
             "group_id":gid,
             "member_id":mem,
             "name":Group.GROUP_EVENT_MEMBER_ADD
         }
-        publish_message(g.rds, content)        
-    
+        Group.publish_member_add_event(g.rds, gid, mem)
+
     v = {
         "group_id":gid, 
         "master":master, 
@@ -80,7 +78,6 @@ def create_group():
 
     resp = {"data":{"group_id":gid}}
     return make_response(200, resp)
-
 
 
 @app.route("/groups/<int:gid>", methods=["DELETE"])
@@ -101,12 +98,10 @@ def delete_group(gid):
     op = {"disband":v}
     send_group_notification(appid, gid, op, None)
 
-    content = {"group_id":gid, "name":Group.GROUP_EVENT_DISBAND}
-    publish_message(g.rds, content)
+    Group.publish_disband_event(g.rds, gid)
 
     resp = {"success":True}
     return make_response(200, resp)
-
 
 
 @app.route("/groups/<int:gid>/upgrade", methods=["POST"])
@@ -116,20 +111,12 @@ def upgrade_group(gid):
     appid = request.appid
     group = Group.get_group(g._db, gid)
 
-    members = Group.get_group_members(g._db, gid)
-
     if not group:
         raise ResponseMeta(400, "group non exists")
 
     Group.update_group_super(g._db, gid, 1)
 
-    content = {
-        "group_id":gid,
-        "app_id":appid,
-        "super":1,
-        "name":Group.GROUP_EVENT_UPGRADE
-    }
-    publish_message(g.rds, content)
+    Group.publish_upgrade_event(g.rds, appid, gid)
 
     v = {
         "group_id":gid,
@@ -226,12 +213,7 @@ def add_group_member(gid):
         op = {"add_member":v}
         send_group_notification(appid, gid, op, [member_id])
 
-        content = {
-            "group_id":gid,
-            "member_id":member_id,
-            "name":Group.GROUP_EVENT_MEMBER_ADD
-        }
-        publish_message(g.rds, content)
+        Group.publish_member_add_event(g.rds, gid, member_id)
 
     resp = {"success":True}
     return make_response(200, resp)
@@ -254,13 +236,7 @@ def remove_group_member(appid, gid, group_name, member):
     
     op = {"quit_group":v}
     send_group_notification(appid, gid, op, [memberid])
-
-    content = {
-        "group_id":gid,
-        "member_id":memberid,
-        "name":Group.GROUP_EVENT_MEMBER_REMOVE
-    }
-    publish_message(g.rds, content)    
+    Group.publish_member_remove_event(g.rds, gid, memberid)
 
     
 @app.route("/groups/<int:gid>/members/<int:memberid>", methods=["DELETE"])
@@ -337,14 +313,7 @@ def group_member_setting(gid, memberid):
     elif 'mute' in obj:
         mute = 1 if obj['mute'] else 0
         Group.update_mute(g._db, gid, uid, mute)
-
-        content = {
-            "group_id":gid,
-            "member_id":memberid,
-            "mute":mute,
-            "name":Group.GROUP_EVENT_MEMBER_MUTE
-        }
-        publish_message(g.rds, content)
+        Group.publish_member_mute_event(g.rds, gid, memberid, mute)
     else:
         raise ResponseMeta(400, "no action")
 
