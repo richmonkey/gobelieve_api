@@ -5,7 +5,7 @@ import json
 import time
 import pymysql
 from .authorization import require_auth
-from models.group_model import Group
+from models.group import Group
 from models.user import User
 
 from libs.util import make_response
