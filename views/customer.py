@@ -1,20 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from flask import request, Blueprint
-import flask
 from flask import g
 import logging
-import json
-import time
-import random
-
 from libs.crossdomain import crossdomain
 from libs.util import make_response
 from libs.util import create_access_token
 from libs.response_meta import ResponseMeta
-from .authorization import require_application_or_person_auth
-from .authorization import require_application_auth
-from .authorization import require_auth
 from .authorization import require_client_auth
 from models.user import User
 from models.app import App
@@ -30,7 +22,7 @@ def customer_register():
     db = g._db
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
-        logging.debug("json decode err:%s", e)
+        logging.debug("json decode err")
         raise ResponseMeta(400, "json decode error")
 
     appid = obj.get("appid", 0)

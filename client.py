@@ -4,23 +4,17 @@
 from flask import request
 from flask import Flask
 from flask import g
-import flask
-import json
 import logging
 import sys
-
-import os
 import random
 import redis
 
 from views import image
 from views import audio
 from views import file
-from views import notification
 from views import customer
 from views import supporter
 from views import push
-from views import client_group
 from libs.response_meta import ResponseMeta
 from libs.mysql import Mysql
 from libs.fs import FS
@@ -33,36 +27,39 @@ app.debug = config.DEBUG
 FS.HOST = config.FS_HOST
 FS.PORT = config.FS_PORT
 
-
 rds = redis.StrictRedis(host=config.REDIS_HOST, password=config.REDIS_PASSWORD, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 
 
-LOGGER = logging.getLogger('')
-
 def before_request():
-    LOGGER.debug("before request")
-    g.rds = rds
+    logging.debug("before request")
+    request.version = None
+    url_rule = request.url_rule
+    if url_rule and url_rule.rule.startswith("/v"):
+        index = url_rule.rule.find("/", 1)
+        if index != -1:
+            request.version = url_rule.rule[1:index]
 
-    db = getattr(g, '_db', None)    
+    g.rds = rds
+    db = getattr(g, '_db', None)
     if db is None:
         g._db = Mysql(config.MYSQL_HOST, config.MYSQL_USER, config.MYSQL_PASSWD,
                       config.MYSQL_DATABASE, config.MYSQL_PORT,
                       config.MYSQL_CHARSET, config.MYSQL_AUTOCOMMIT)                
 
+
 def app_teardown(exception):
-    LOGGER.debug('app_teardown')
+    logging.debug('app_teardown')
     # 捕获teardown时的mysql异常
     try:
         db = getattr(g, '_db', None)
         if db:
             db.close()
-
     except Exception:
         pass
 
 
 def http_error_handler(err):
-    LOGGER.error(err)
+    logging.error(err)
     return ResponseMeta(code=err.code, http_code=err.code)
 
 
@@ -79,11 +76,19 @@ def init_logger(logger):
     root = logger
     root.setLevel(logging.DEBUG)
 
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(filename)s:%(lineno)d -  %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    root.addHandler(ch)    
+    if hasattr(config, "LOG_FILENAME"):
+        handler = logging.handlers.RotatingFileHandler(config.LOG_FILENAME, maxBytes=1024 * 1024 * 1024, backupCount=2)
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(filename)s:%(lineno)d -  %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
+    else:
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(filename)s:%(lineno)d -  %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        root.addHandler(ch)
+
 
 # 初始化接口
 def init_app(app):
@@ -99,17 +104,22 @@ def init_app(app):
     app.register_blueprint(image.app)
     app.register_blueprint(audio.app)
     app.register_blueprint(file.app)
-    app.register_blueprint(client_group.app)
-    app.register_blueprint(notification.app)
     app.register_blueprint(customer.app)
     app.register_blueprint(supporter.app)
     app.register_blueprint(push.app)
+
+    app.register_blueprint(image.app, url_prefix="/v2")
+    app.register_blueprint(audio.app, url_prefix="/v2")
+    app.register_blueprint(file.app, url_prefix="/v2")
+    app.register_blueprint(customer.app, url_prefix="/v2")
+    app.register_blueprint(supporter.app, url_prefix="/v2")
+    app.register_blueprint(push.app, url_prefix="/v2")
+
 
 random.seed()
 
 log = logging.getLogger('')
 init_logger(log)
-
 init_app(app)
 
 if __name__ == '__main__':

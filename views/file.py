@@ -3,12 +3,11 @@ from flask import request, Blueprint
 from libs.util import make_response
 from libs.fs import FS
 import hashlib
-import json
 import os
-import logging
 from .authorization import require_auth
 
 app = Blueprint('file', __name__)
+
 
 def NO_CONTENT():
     e = {"error":"上传内容为空"}

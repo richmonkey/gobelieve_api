@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-import config
-from urllib.parse import urlencode
 from flask import request, Blueprint
-import flask
 from flask import g
 import logging
-import json
-import time
 from libs.util import make_json_response
 from libs.response_meta import ResponseMeta
 from .authorization import require_auth

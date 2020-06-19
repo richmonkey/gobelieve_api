@@ -3,7 +3,6 @@ from flask import request, Blueprint
 from libs.util import make_response
 from libs.fs import FS
 import hashlib
-import json
 import subprocess
 import os
 import tempfile
@@ -34,9 +33,6 @@ def amr_to_mp3(data):
     return mp3_data
 
 
-
-@app.route('/v2/audios', methods=['POST'])
-@require_auth
 def upload_form_file():
     if 'file' not in request.files:
         return NO_CONTENT()
@@ -59,11 +55,8 @@ def upload_form_file():
     obj["src"] = src
     obj["src_url"] = url
     return make_response(200, obj)
-    
 
 
-@app.route('/audios', methods=['POST'])
-@require_auth
 def upload_file():
     if not request.data:
         return NO_CONTENT()
@@ -82,6 +75,15 @@ def upload_file():
         return make_response(200, obj)
 
 
+@app.route('/audios', methods=['POST'])
+@require_auth
+def upload_audio():
+    if request.version is None:
+        return upload_file()
+    else:
+        return upload_form_file()
+
+
 @app.route('/audios/<audio_path>.mp3')
 def download_mp3(audio_path):
     path = "/audios/" + audio_path + ".mp3"
@@ -98,6 +100,7 @@ def download_mp3(audio_path):
         return make_response(400)
     else:
         return data
+
 
 @app.route('/audios/<audio_path>')
 def download_file(audio_path):

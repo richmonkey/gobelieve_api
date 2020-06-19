@@ -2,12 +2,9 @@ from flask import request
 from flask import Flask
 import flask
 import hashlib
-import json
-import os
 from  libs.thumbnail import *
 from libs.fs import FS
 from flask import request, Blueprint
-from werkzeug import secure_filename
 from libs.util import make_response
 from .authorization import require_auth
 import logging
@@ -22,8 +19,7 @@ def image_ext(content_type):
     else:
         return ""
 
-@app.route("/v2/images", methods=['POST'])
-@require_auth
+
 def upload_form_image():
     if 'file' not in request.files:
         return make_response(400)
@@ -51,9 +47,7 @@ def upload_form_image():
     return make_response(200, data=obj)
 
 
-@app.route('/images', methods=['POST'])
-@require_auth
-def upload_image():
+def upload_image_v0():
     if not request.data:
         return make_response(400)
 
@@ -72,6 +66,16 @@ def upload_image():
     src = "/images/" + name + ext
     obj = {"src":src, "src_url":url}
     return make_response(200, data=obj)
+
+
+@app.route('/images', methods=['POST'])
+@require_auth
+def upload_image():
+    if request.version is None:
+        return upload_image_v0()
+    else:
+        return upload_form_image()
+
 
 def download_thumbnail(path):
     tb_path = thumbnail_path(path)
