@@ -26,6 +26,9 @@ im_url = config.IM_RPC_URL
 @require_application_auth
 def post_group_message():
     appid = request.appid
+    if appid in config.DISABLED_APP_IDS:
+        raise ResponseMeta(400, "disabled appid")
+    
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
         logging.debug("json decode err:%s", e)
@@ -43,6 +46,8 @@ def post_group_message():
 @require_application_auth
 def post_peer_messages():
     appid = request.appid
+    if appid in config.DISABLED_APP_IDS:
+        raise ResponseMeta(400, "disabled appid")
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
         logging.debug("json decode err:%s", e)
@@ -59,6 +64,8 @@ def post_peer_messages():
 @require_application_auth
 def post_notification():
     appid = request.appid
+    if appid in config.DISABLED_APP_IDS:
+        raise ResponseMeta(400, "disabled appid")    
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
         logging.debug("json decode err:%s", e)
@@ -78,6 +85,8 @@ def post_notification():
 @require_application_auth
 def post_system_message():
     appid = request.appid
+    if appid in config.DISABLED_APP_IDS:
+        raise ResponseMeta(400, "disabled appid")    
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
         logging.debug("json decode err:%s", e)
@@ -97,6 +106,9 @@ def post_system_message():
 @require_application_auth
 def post_room_message():
     appid = request.appid
+    if appid in config.DISABLED_APP_IDS:
+        raise ResponseMeta(400, "disabled appid")
+    
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
         logging.debug("json decode err:%s", e)
@@ -117,7 +129,8 @@ def post_room_message():
 @require_application_auth
 def post_group_notification():
     appid = request.appid
-
+    if appid in config.DISABLED_APP_IDS:
+        raise ResponseMeta(400, "disabled appid")
     obj = request.get_json(force=True, silent=True, cache=False)
     if obj is None:
         logging.debug("json decode err:%s", e)
