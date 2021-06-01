@@ -318,6 +318,22 @@ do_not_disturb和nickname一次只能设置一个选项
 
 
 
+### 发送群通知消息
+- 请求地址：**POST /messages/rooms**
+- 是否认证：服务端授权
+- 请求头:Content-Type:application/json
+- 请求内容:
+
+        {
+            "sender":"群id(整型)",
+            "receiver":"聊天室id(整型)",
+            "content":"消息内容",
+        }
+
+- 成功响应：200
+- 操作失败：
+  状态码:400
+
 
 
 #客服接口
