@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import request, Blueprint
+import flask
 from libs.util import make_response
 from libs.fs import FS
 import hashlib
+import mimetypes
 import os
 from .authorization import require_auth
 
@@ -43,10 +45,15 @@ def upload_file():
 
 @app.route('/files/<file_path>')
 def download_file(file_path):
+    content_type, _ = mimetypes.guess_type(file_path)
     path = "/files/" + file_path
     data = FS.download(path)
     if not data:
-        return make_response(400)
+        return flask.make_response("", 404)
     else:
-        return data
+        res = flask.make_response(data, 200)
+        if content_type is None:
+            content_type = "application/octet-stream"
+        res.headers['Content-Type'] = content_type
+        return res
 

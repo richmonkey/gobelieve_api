@@ -7,7 +7,7 @@ from flask import g
 import json
 import logging
 import sys
-
+import mimetypes
 
 import os
 import random
@@ -89,6 +89,7 @@ def init_app(app):
 
 
 random.seed()
+mimetypes.init()
 
 log = logging.getLogger('')
 init_logger(log)
